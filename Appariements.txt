@@ -1,0 +1,130 @@
+Nom de la Ronde 1 :
+Heure de début de ronde : 21:46
+------------------------------------------------------------
+  Michel    Klein           s'oppose à  Louisette  Kliveau
+------------------------------------------------------------
+  Pierre    Bellegueule     s'oppose à    Kevin    Vanupied
+------------------------------------------------------------
+  Francis   Flibustier      s'oppose à  Alphonse   Dumarez
+------------------------------------------------------------
+  Ravier    Dupont          s'oppose à    Lyse     Bellegueule
+------------------------------------------------------------
+Appuyez sur une entrée pour rentrer les résultats...
+
+Entrez le résultat du match entre Michel et Louisette ('1/2', '1-0' ou '0-1')
+1-0
+Entrez le résultat du match entre Pierre et Kevin ('1/2', '1-0' ou '0-1')
+0-1
+Entrez le résultat du match entre Francis et Alphonse ('1/2', '1-0' ou '0-1')
+1/2
+Entrez le résultat du match entre Ravier et Lyse ('1/2', '1-0' ou '0-1')
+1-0
+Heure de fin de ronde : 21:46
+           |           |   Total   |
+ -------------------------------------
+Michel     |     1     |     1     |
+ -------------------------------------
+Ravier     |     1     |     1     |
+ -------------------------------------
+Kevin      |     1     |     1     |
+ -------------------------------------
+Francis    |    0.5    |    0.5    |
+ -------------------------------------
+Alphonse   |    0.5    |    0.5    |
+ -------------------------------------
+Pierre     |     0     |     0     |
+ -------------------------------------
+Louisette  |     0     |     0     |
+ -------------------------------------
+Lyse       |     0     |     0     |
+ -------------------------------------
+Nom de la 2ème ronde :
+Heure de début de ronde : 21:46
+------------------------------------------------------------
+  Michel    Klein           s'oppose à   Ravier    Dupont
+------------------------------------------------------------
+   Kevin    Vanupied        s'oppose à   Francis   Flibustier
+------------------------------------------------------------
+ Alphonse   Dumarez         s'oppose à   Pierre    Bellegueule
+------------------------------------------------------------
+ Louisette  Kliveau         s'oppose à    Lyse     Bellegueule
+------------------------------------------------------------
+Appuyez sur une entrée pour rentrer les résultats...
+
+Entrez le résultat du match entre Michel et Ravier ('1/2', '1-0' ou '0-1')
+1-0
+Entrez le résultat du match entre Kevin et Francis ('1/2', '1-0' ou '0-1')
+0-1
+Entrez le résultat du match entre Alphonse et Pierre ('1/2', '1-0' ou '0-1')
+1/2
+Entrez le résultat du match entre Louisette et Lyse ('1/2', '1-0' ou '0-1')
+1/2
+Heure de fin de ronde : 21:46
+           |           |           |   Total   |
+ ------------------------------------------------
+Michel     |     1     |     1     |     2     |
+ ------------------------------------------------
+Francis    |    0.5    |     1     |    1.5    |
+ ------------------------------------------------
+Ravier     |     1     |     0     |     1     |
+ ------------------------------------------------
+Kevin      |     1     |     0     |     1     |
+ ------------------------------------------------
+Alphonse   |    0.5    |    0.5    |    1.0    |
+ ------------------------------------------------
+Pierre     |     0     |    0.5    |    0.5    |
+ ------------------------------------------------
+Louisette  |     0     |    0.5    |    0.5    |
+ ------------------------------------------------
+Lyse       |     0     |    0.5    |    0.5    |
+ ------------------------------------------------
+Nom de la 3ème ronde :
+Heure de début de ronde : 21:46
+------------------------------------------------------------
+  Michel    Klein           s'oppose à   Francis   Flibustier
+------------------------------------------------------------
+  Ravier    Dupont          s'oppose à    Kevin    Vanupied
+------------------------------------------------------------
+ Alphonse   Dumarez         s'oppose à  Louisette  Kliveau
+------------------------------------------------------------
+  Pierre    Bellegueule     s'oppose à    Lyse     Bellegueule
+------------------------------------------------------------
+Appuyez sur une entrée pour rentrer les résultats...
+
+Entrez le résultat du match entre Michel et Francis ('1/2', '1-0' ou '0-1')
+1-0
+Entrez le résultat du match entre Ravier et Kevin ('1/2', '1-0' ou '0-1')
+0-1
+Entrez le résultat du match entre Alphonse et Louisette ('1/2', '1-0' ou '0-1')
+0-1
+Entrez le résultat du match entre Pierre et Lyse ('1/2', '1-0' ou '0-1')
+0-1
+Heure de fin de ronde : 21:46
+           |           |           |           |   Total   |
+ -----------------------------------------------------------
+Michel     |     1     |     1     |     1     |     3     |
+ -----------------------------------------------------------
+Kevin      |     1     |     0     |     1     |     2     |
+ -----------------------------------------------------------
+Francis    |    0.5    |     1     |     0     |    1.5    |
+ -----------------------------------------------------------
+Louisette  |     0     |    0.5    |     1     |    1.5    |
+ -----------------------------------------------------------
+Lyse       |     0     |    0.5    |     1     |    1.5    |
+ -----------------------------------------------------------
+Ravier     |     1     |     0     |     0     |     1     |
+ -----------------------------------------------------------
+Alphonse   |    0.5    |    0.5    |     0     |    1.0    |
+ -----------------------------------------------------------
+Pierre     |     0     |    0.5    |     0     |    0.5    |
+ -----------------------------------------------------------
+Nom de la 4ème ronde :
+Heure de début de ronde : 21:46
+------------------------------------------------------------
+  Michel    Klein           s'oppose à    Kevin    Vanupied
+------------------------------------------------------------
+  Francis   Flibustier      s'oppose à  Louisette  Kliveau
+------------------------------------------------------------
+   Lyse     Bellegueule     s'oppose à   Ravier    Dupont
+------------------------------------------------------------
+Appuyez sur une entrée pour rentrer les résultats...

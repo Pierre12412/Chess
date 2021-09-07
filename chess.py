@@ -1,4 +1,4 @@
-from operator import attrgetter, xor
+from operator import attrgetter
 import time
 from consolemenu.console_menu import ConsoleMenu
 from consolemenu.items import FunctionItem
@@ -33,6 +33,14 @@ class Tournament:
         self.turn = turn
         self.opponents = opponents
 
+    def conditions_duo(self, player1, player2, round):
+        for match in round.match_list:
+            if match.player1.name == player1.name or match.player2.name == player2.name or match.player2.name == player1.name or match.player1.name == player2.name:
+                return False
+        in_opp = (player1.name, player2.name) in self.opponents
+        in_opp2 = (player2.name, player1.name) in self.opponents
+        return not in_opp or in_opp2
+
     def switzerland(self):
         dash = 60*'-'
         '''Met en place le système d'appariement Suisse'''
@@ -52,14 +60,6 @@ class Tournament:
                 else:
                     second_part.append(self.players[i])
 
-            # Si le nombre de joueur est impair
-            # 1 Point d'office
-            if len(second_part) > len(first_part):
-                player = second_part.pop()
-                player.score += 1
-                round0.results.append([player.name, '1'])
-                print(player.name + ' est exempté (nombre impair) et gagne 1 point')
-
             for i in range(len(first_part)):
                 match = Match(first_part[i], second_part[i])
                 self.opponents.append(
@@ -75,107 +75,44 @@ class Tournament:
             # On ajoute la ronde au tournois
             self.rondes_instances.append(round0)
             print(dash)
+
         else:
             roundx = Round(str(input("Nom de la {}ème ronde : "
                                      .format(self.turn))))
             self.players = sorted(self.players,
                                   key=attrgetter('score', 'ranking'),
                                   reverse=True)
-
             # On apparie les joueurs par score
+            actual = 0
+            while actual < len(self.players) and actual + 1 < len(self.players):
+                next = actual + 1
+                matched = False
+                while matched == False and (next < len(self.players)):
+                    if self.conditions_duo(self.players[actual], self.players[next], roundx):
+                        matched = True
+                        match = Match(self.players[actual], self.players[next])
 
-            if len(self.players) % 2 == 1:
-                index = len(self.players) -1
-                while (self.players[index],self.players[index]) in self.opponents:
-                    index -= 1
-                last = self.players[index]
-                last.score += 1
-                roundx.results.append([last.name, '1'])
-                self.opponents.append((last.name, last.name))
-                print(last.name + ' est exempté (nombre impair) et gagne 1 point')
+                        # On ajoute les matchs a la ronde x
+                        roundx.match_list.append(match)
+                        self.opponents.append(
+                            (self.players[actual].name, self.players[next].name)
+                            )
+                        print(dash)
+                        print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
+                            .format(self.players[actual].name,
+                                    self.players[actual].surname,
+                                    self.players[next].name,
+                                    self.players[next].surname))
+                    else:
+                        next += 1
 
-            # i et j sont les index des joueurs à apparier
-            # dans la liste self.players
-            i = 0
-            while (i < len(self.players)
-                    and len(self.opponents)
-                    != (len(self.players)*(len(self.players)-1))/2):
-                j = i
-                opp = True  # Par défaut, le joueur j+1 a déjà un adversaire
-
-                # Cas où on a déjà apparié un joueur avec un autre
-                # mais on essaye de l'apparier de nouveau
-                for match in roundx.match_list:
-                    if (match.player1.name == self.players[i].name
-                            or
-                            match.player2.name
-                            == self.players[i].name):
-                        i += 1
-                        j += 1
-                        break
-
-                # On revérifie que le dernier joueur de la liste
-                # n'a pas déjà été apparié sinon i et j sont trop grands
-                if i < len(self.players) and j+1 < len(self.players):
-                    while (j+1 < len(self.players)) and opp:
-                        if ((self.players[i].name,
-                            self.players[j+1].name)
-                            in self.opponents
-                            or (self.players[j+1].name,
-                            self.players[i].name)
-                                in self.opponents
-                            or
-                            (self.players[j+1].name,self.players[j+1].name) in self.opponents
-                            or 
-                            (self.players[i].name,self.players[i].name) in self.opponents):
-                            j += 1
-                        else:
-
-                            # Cas où on essaye d'apparier un joueur
-                            # avec un qui y est déjà avec un autre
-                            for match in roundx.match_list:
-                                if (match.player1.name ==
-                                    self.players[j+1].name
-                                    or
-                                        match.player2.name
-                                        == self.players[j+1].name):
-                                    j += 1  # Si il a un adversaire :suivant
-                                    continue
-                            opp = False  # Le joueur j+1 n'a pas d'adversaire
-
-                    if j == len(self.players) - 1:
-                        break
-                    match = Match(self.players[i], self.players[j+1])
-                    self.opponents.append(
-                        (self.players[i].name, self.players[j + 1].name)
-                        )
-                    print(dash)
-                    print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
-                          .format(self.players[i].name,
-                                  self.players[i].surname,
-                                  self.players[j+1].name,
-                                  self.players[j+1].surname))
-
-                    # On ajoute les matchs a la ronde x
-                    roundx.match_list.append(match)
-
+                if next == actual + 1:
+                    actual += 2
                 else:
-                    break
-
-                if j == i:
-                    i += 2
-                else:
-                    # Si le joueur suivant est déjà apparié
-                    # on passe à celui d'après
-                    for match in roundx.match_list:
-                        while (match.player1.name == self.players[i+1].name
-                               or
-                               match.player2.name == self.players[i+1].name):
-                            i += 1
-                            if i+1 == len(self.players):
-                                break
-                    i += 1
+                    actual += 1
             print(dash)
+            if len(roundx.match_list) != (len(self.players)/2):
+                print('Problème')
             # On ajoute la ronde au tournois
             self.rondes_instances.append(roundx)
 
@@ -385,62 +322,3 @@ def tournaments_informations():
 
 
 start()
-
-
-# tournois = Tournament('Open du Touquet', "Le touquet", '04/09/2021',
-#                       'Blitz', 'Quelques mots pour la déscription',
-#                       players=[Lyse, Pierre, Jean, Marc,
-#                                Yves, Baton, Michel, Kevin])
-
-# def test():
-#     Pierre = Player(name='Pierre',
-#                     surname='Bellegueule',
-#                     born="30/06/02",
-#                     gender='M',
-#                     ranking='1600')
-
-#     Lyse = Player(name='Lyse',
-#                   surname='Bellegueule',
-#                   born="03/12/00",
-#                   gender='F',
-#                   ranking='1199')
-
-#     Jean = Player(name='Jean',
-#                   surname='Kilian',
-#                   born="03/10/99",
-#                   gender='M',
-#                   ranking='1198')
-
-#     Marc = Player(name='Marc',
-#                   surname='Obsule',
-#                   born="22/10/99",
-#                   gender='M',
-#                   ranking='1200')
-
-#     Yves = Player(name='Yves',
-#                   surname='Capoera',
-#                   born="25/06/95",
-#                   gender='M',
-#                   ranking='2511')
-
-#     Baton = Player(name='Baton',
-#                    surname='Iov',
-#                    born="08/08/55",
-#                    gender='F',
-#                    ranking='1050')
-
-#     Michel = Player(name='Michel',
-#                     surname='Cours',
-#                     born="09/04/71",
-#                     gender='M',
-#                     ranking='1000')
-
-#     Kevin = Player(name='Kevin',
-#                    surname='Vanupied',
-#                    born="06/06/12",
-#                    gender='M',
-#                    ranking='1350')
-
-
-
-# tournois.start_tournament()
