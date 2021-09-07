@@ -1,4 +1,4 @@
-from operator import attrgetter
+from operator import attrgetter, xor
 import time
 from consolemenu.console_menu import ConsoleMenu
 from consolemenu.items import FunctionItem
@@ -52,10 +52,13 @@ class Tournament:
                 else:
                     second_part.append(self.players[i])
 
-            # to work
+            # Si le nombre de joueur est impair
+            # 1 Point d'office
             if len(second_part) > len(first_part):
                 player = second_part.pop()
                 player.score += 1
+                round0.results.append([player.name, '1'])
+                print(player.name + ' est exempté (nombre impair) et gagne 1 point')
 
             for i in range(len(first_part)):
                 match = Match(first_part[i], second_part[i])
@@ -80,6 +83,16 @@ class Tournament:
                                   reverse=True)
 
             # On apparie les joueurs par score
+
+            if len(self.players) % 2 == 1:
+                index = len(self.players) -1
+                while (self.players[index],self.players[index]) in self.opponents:
+                    index -= 1
+                last = self.players[index]
+                last.score += 1
+                roundx.results.append([last.name, '1'])
+                self.opponents.append((last.name, last.name))
+                print(last.name + ' est exempté (nombre impair) et gagne 1 point')
 
             # i et j sont les index des joueurs à apparier
             # dans la liste self.players
@@ -110,7 +123,11 @@ class Tournament:
                             in self.opponents
                             or (self.players[j+1].name,
                             self.players[i].name)
-                                in self.opponents):
+                                in self.opponents
+                            or
+                            (self.players[j+1].name,self.players[j+1].name) in self.opponents
+                            or 
+                            (self.players[i].name,self.players[i].name) in self.opponents):
                             j += 1
                         else:
 
@@ -164,7 +181,9 @@ class Tournament:
 
     def rounds_score(self):
         '''Affiche proprement en tableau les résultats
-        des rondes passées du tournois'''
+        des rondes passées du tournois
+
+        Prend la liste des joueurs et celle des instances de rondes'''
 
         dash = '-' * (11 * (len(self.rondes_instances)+1) + 15)
 
@@ -198,6 +217,7 @@ class Tournament:
             print('\n', dash)
 
     def start_tournament(self):
+        '''Démarre le tournois et apparie'''
         while self.turn != self.round:
             if self.turn == 1:
                 self.switzerland()
