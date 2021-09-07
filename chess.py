@@ -1,10 +1,25 @@
-from operator import attrgetter
+from operator import attrgetter, ge
 import time
+from consolemenu.console_menu import ConsoleMenu
+from consolemenu.items import FunctionItem
+from tinydb import TinyDB
+
+
+players = []
+
+
+def console_menu():
+    menu = ConsoleMenu("Menu de selection", "Choisissez une option")
+    function_item1 = FunctionItem('Démarrer un tournois', tournaments_informations)
+    function_item2 = FunctionItem('Ajouter un joueur', add_player)
+    menu.append_item(function_item1)
+    menu.append_item(function_item2)
+    menu.show()
 
 
 class Tournament:
     def __init__(self, name, place, date, cadence, description,
-                 round=5, rondes_instances=[], players=[], turn=1,
+                 round=5, rondes_instances=[], players=players, turn=1,
                  opponents=[]):
         self.__init__
         self.name = name
@@ -106,6 +121,8 @@ class Tournament:
                                     continue
                             opp = False  # Le joueur j+1 n'a pas d'adversaire
 
+                    if j == len(self.players) - 1:
+                        break
                     match = Match(self.players[i], self.players[j+1])
                     self.opponents.append(
                         (self.players[i].name, self.players[j + 1].name)
@@ -183,13 +200,18 @@ class Tournament:
             else:
                 self.switzerland()
                 self.rondes_instances[self.turn-1].end()
+
+                # Nombre d'appariements max pour un nombre de personne
+                # Pour 4 : (4*3)/2 = 6 couples possibles
                 if (len(self.opponents)
                    == (len(self.players)*(len(self.players)-1))/2):
                     self.end_tournament()
                     break
+
             self.turn += 1
             # On affiche le tableau des scores
             self.rounds_score()
+        self.end_tournament()
 
     def end_tournament(self):
         '''Messages et affichage de fin de tournois'''
@@ -281,60 +303,119 @@ class Player:
         self.score = score
 
 
-def test():
-    Pierre = Player(name='Pierre',
-                    surname='Bellegueule',
-                    born="30/06/02",
-                    gender='M',
-                    ranking='1600')
+def save_players(players=players):
+    db = TinyDB('db.json')
+    players_table = db.table('players')
+    players_table.truncate()  
+    for player in players:
+        serialized_player = {
+            'name': player.name,
+            'surname': player.surname,
+            'born': player.born,
+            'gender': player.gender,
+            'ranking': player.ranking,
+            'score': 0
+            }
+        players_table.insert(serialized_player)
 
-    Lyse = Player(name='Lyse',
-                  surname='Bellegueule',
-                  born="03/12/00",
-                  gender='F',
-                  ranking='1199')
 
-    Jean = Player(name='Jean',
-                  surname='Kilian',
-                  born="03/10/99",
-                  gender='M',
-                  ranking='1198')
+def add_player():
+    name = str(input('Prénom du joueur à ajouter \n'))
+    surname = str(input('Nom du joueur à ajouter\n'))
+    born = str(input('Date de naissance du joueur à ajouter\n'))
+    gender = str(input("Genre du joueur à ajouter ('M' ou 'F')\n"))
+    ranking = str(input("Classement du joueur à ajouter\n"))
+    new = Player(name=name, surname=surname, born=born,
+                 gender=gender, ranking=ranking)
+    players.append(new)
+    save_players()
 
-    Marc = Player(name='Marc',
-                  surname='Obsule',
-                  born="22/10/99",
-                  gender='M',
-                  ranking='1200')
 
-    Yves = Player(name='Yves',
-                  surname='Capoera',
-                  born="25/06/95",
-                  gender='M',
-                  ranking='2511')
+def load_players():
+    db = TinyDB('db.json')
+    players_table = db.table('players')
+    serialized_players = players_table.all()
+    for serial in serialized_players:
+        name = serial['name']
+        surname = serial['surname']
+        born = serial['born']
+        gender = serial['gender']
+        ranking = serial['ranking']
+        players.append(Player(name, surname, born, gender, ranking))
 
-    Baton = Player(name='Baton',
-                   surname='Iov',
-                   born="08/08/55",
-                   gender='F',
-                   ranking='1050')
 
-    Michel = Player(name='Michel',
-                    surname='Cours',
-                    born="09/04/71",
-                    gender='M',
-                    ranking='1000')
+def start():
+    load_players()
+    console_menu()
 
-    Kevin = Player(name='Kevin',
-                   surname='Vanupied',
-                   born="06/06/12",
-                   gender='M',
-                   ranking='1350')
 
-    tournois = Tournament('Open du Touquet', "Le touquet", '04/09/2021',
-                          'Blitz', 'Quelques mots pour la déscription',
-                          players=[Lyse, Pierre, Jean, Marc,
-                                   Yves, Baton, Michel, Kevin])
+def tournaments_informations():
+    name = str(input('Nom du tournois\n'))
+    place = str(input('Lieu du tournois\n'))
+    date = str(input('Date du tournois \n'))
+    cadence = str(input('Cadence du tournois'))
+    description = str(input('Description du tournois'))
+    tournois = Tournament(name, place, date, cadence, description)
     tournois.start_tournament()
 
 
-test()
+start()
+
+
+# tournois = Tournament('Open du Touquet', "Le touquet", '04/09/2021',
+#                       'Blitz', 'Quelques mots pour la déscription',
+#                       players=[Lyse, Pierre, Jean, Marc,
+#                                Yves, Baton, Michel, Kevin])
+
+# def test():
+#     Pierre = Player(name='Pierre',
+#                     surname='Bellegueule',
+#                     born="30/06/02",
+#                     gender='M',
+#                     ranking='1600')
+
+#     Lyse = Player(name='Lyse',
+#                   surname='Bellegueule',
+#                   born="03/12/00",
+#                   gender='F',
+#                   ranking='1199')
+
+#     Jean = Player(name='Jean',
+#                   surname='Kilian',
+#                   born="03/10/99",
+#                   gender='M',
+#                   ranking='1198')
+
+#     Marc = Player(name='Marc',
+#                   surname='Obsule',
+#                   born="22/10/99",
+#                   gender='M',
+#                   ranking='1200')
+
+#     Yves = Player(name='Yves',
+#                   surname='Capoera',
+#                   born="25/06/95",
+#                   gender='M',
+#                   ranking='2511')
+
+#     Baton = Player(name='Baton',
+#                    surname='Iov',
+#                    born="08/08/55",
+#                    gender='F',
+#                    ranking='1050')
+
+#     Michel = Player(name='Michel',
+#                     surname='Cours',
+#                     born="09/04/71",
+#                     gender='M',
+#                     ranking='1000')
+
+#     Kevin = Player(name='Kevin',
+#                    surname='Vanupied',
+#                    born="06/06/12",
+#                    gender='M',
+#                    ranking='1350')
+
+
+
+# tournois.start_tournament()
