@@ -1,4 +1,4 @@
-from operator import attrgetter, ge
+from operator import attrgetter
 import time
 from consolemenu.console_menu import ConsoleMenu
 from consolemenu.items import FunctionItem
@@ -51,6 +51,11 @@ class Tournament:
                     first_part.append(self.players[i])
                 else:
                     second_part.append(self.players[i])
+
+            # to work
+            if len(second_part) > len(first_part):
+                player = second_part.pop()
+                player.score += 1
 
             for i in range(len(first_part)):
                 match = Match(first_part[i], second_part[i])
