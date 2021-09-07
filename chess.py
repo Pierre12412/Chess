@@ -4,7 +4,7 @@ import time
 
 class Tournament:
     def __init__(self, name, place, date, cadence, description,
-                 round=4, rondes_instances=[], players=[], turn=1,
+                 round=5, rondes_instances=[], players=[], turn=1,
                  opponents=[]):
         self.__init__
         self.name = name
@@ -20,105 +20,111 @@ class Tournament:
 
     def switzerland(self):
         dash = 60*'-'
-        '''Met en place le système d'appariement Suisse et lance le tournois'''
+        '''Met en place le système d'appariement Suisse'''
 
-        while self.turn != self.round:
+        # Si c'est la première ronde, on divise en deux groupes, on apparie
+        if self.turn == 1:
+            round0 = Round(round_name=str(input("Nom de la Ronde 1 : ")))
+            self.players = sorted(self.players,
+                                  key=attrgetter('ranking'),
+                                  reverse=True)
+            first_part = []
+            second_part = []
 
-            # Si c'est la première ronde, on divise en deux groupes, on apparie
-            if self.turn == 1:
-                round0 = Round(round_name=str(input("Nom de la Ronde 1 : ")))
-                self.rondes_instances.append(round0)
-                self.players = sorted(self.players,
-                                      key=attrgetter('ranking'),
-                                      reverse=True)
-                first_part = []
-                second_part = []
+            for i in range(len(self.players)):
+                if i+1 <= len(self.players)/2:
+                    first_part.append(self.players[i])
+                else:
+                    second_part.append(self.players[i])
 
-                for i in range(len(self.players)):
-                    if i+1 <= len(self.players)/2:
-                        first_part.append(self.players[i])
-                    else:
-                        second_part.append(self.players[i])
-
-                for i in range(len(first_part)):
-                    match = Match(first_part[i], second_part[i])
-                    self.opponents.append(
-                        (first_part[i].name, second_part[i].name)
-                        )
-                    print(dash)
-                    print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
-                          .format(first_part[i].name, first_part[i].surname,
-                                  second_part[i].name, second_part[i].surname))
-                    # On ajoute les matchs a la ronde 0
-                    round0.match_list.append(match)
+            for i in range(len(first_part)):
+                match = Match(first_part[i], second_part[i])
+                self.opponents.append(
+                    (first_part[i].name, second_part[i].name)
+                    )
                 print(dash)
-                input('Appuyez sur une entrée pour rentrer les résultats...\n')
-                self.turn += 1
-                round0.end()
-            else:
-                roundx = Round(str(input("Nom de la {}ème ronde : "
-                                         .format(self.turn))))
-                self.rondes_instances.append(roundx)
-                self.players = sorted(self.players,
-                                      key=attrgetter('score', 'ranking'),
-                                      reverse=True)
+                print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
+                      .format(first_part[i].name, first_part[i].surname,
+                              second_part[i].name, second_part[i].surname))
 
-                # On apparie les joueurs par score
-                # (ils se suivent dans la liste self.players)
+                # On ajoute les matchs a la ronde 1
+                round0.match_list.append(match)
+            # On ajoute la ronde au tournois
+            self.rondes_instances.append(round0)
+            print(dash)
+        else:
+            roundx = Round(str(input("Nom de la {}ème ronde : "
+                                     .format(self.turn))))
+            self.players = sorted(self.players,
+                                  key=attrgetter('score', 'ranking'),
+                                  reverse=True)
 
-                # i et j sont les index des joueurs à apparier
-                # dans la liste self.players
-                i = 0
-                while (i <= len(self.players)
-                        and len(self.opponents)
-                        != (len(self.players)*(len(self.players)-1))/2):
-                    j = i
+            # On apparie les joueurs par score
+            # (ils se suivent dans la liste self.players)
 
-                    while ((self.players[i].name, self.players[j+1].name)
-                           in self.opponents
-                           or (self.players[j+1].name, self.players[i].name)
-                           in self.opponents):
+            # i et j sont les index des joueurs à apparier
+            # dans la liste self.players
+            i = 0
+            while (i < len(self.players)
+                    and len(self.opponents)
+                    != (len(self.players)*(len(self.players)-1))/2):
+                j = i
+                opp = True
+                while (j+1 < len(self.players)) and opp:
+                    if ((self.players[i].name,
+                        self.players[j+1].name)
+                        in self.opponents
+                        or (self.players[j+1].name,
+                        self.players[i].name)
+                            in self.opponents):
                         j += 1
-                        if j == len(self.players)-1:
-                            break
+                    else:
+                        for match in roundx.match_list:
+                            if match.player1.name == self.players[j+1].name or match.player2.name == self.players[j+1].name:
+                                j += 1
+                                continue
+                        opp = False
+
                     if j == len(self.players)-1:
                         break
-                    match = Match(self.players[i], self.players[j+1])
-                    self.opponents.append(
-                        (self.players[i].name, self.players[j + 1].name)
-                        )
-                    print(dash)
-                    print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
-                          .format(self.players[i].name,
-                                  self.players[i].surname,
-                                  self.players[j+1].name,
-                                  self.players[j+1].surname))
-
-                    # On ajoute les matchs a la ronde x
-                    roundx.match_list.append(match)
-                    if j == i:
-                        i += 2
-                    else:
-                        i += 1
-                print(dash)
-                input('Appuyez sur une entrée pour rentrer les résultats...\n')
-                self.turn += 1
-                roundx.end()
-
-                if (len(self.opponents)
-                   == (len(self.players)*(len(self.players)-1))/2):
-
-                    self.end_tournament()
+                if j == len(self.players)-1:
                     break
+                match = Match(self.players[i], self.players[j+1])
+                self.opponents.append(
+                    (self.players[i].name, self.players[j + 1].name)
+                    )
+                print(dash)
+                print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
+                      .format(self.players[i].name,
+                              self.players[i].surname,
+                              self.players[j+1].name,
+                              self.players[j+1].surname))
 
-            # On affiche le tableau des scores
-            self.rounds_score()
+                # On ajoute les matchs a la ronde x
+                roundx.match_list.append(match)
+
+                if j == i:
+                    i += 2
+                else:
+                    for match in roundx.match_list:
+                        while match.player1.name == self.players[i+1].name or match.player2.name == self.players[i+1].name:
+                            i += 1
+                            if i+1 == len(self.players):
+                                break
+                    i += 1
+            print(dash)
+            # On ajoute la ronde au tournois
+            self.rondes_instances.append(roundx)
 
     def rounds_score(self):
         '''Affiche proprement en tableau les résultats
         des rondes passées du tournois'''
 
         dash = '-' * (11 * (len(self.rondes_instances)+1) + 15)
+
+        self.players = sorted(self.players,
+                              key=attrgetter('score', 'ranking'),
+                              reverse=True)
 
         # Première ligne, on affiche l'en-tête : le nom de(s) ronde(s) et Total
         print('{:>10s}'.format(' '), end=' |')
@@ -144,6 +150,22 @@ class Tournament:
                                   .format(str(name_score[1])), end=' | ')
             print('{:^9s}'.format(str(player.score)), end=' | ')
             print('\n', dash)
+
+    def start_tournament(self):
+        while self.turn != self.round:
+            if self.turn == 1:
+                self.switzerland()
+                self.rondes_instances[0].end()
+            else:
+                self.switzerland()
+                self.rondes_instances[self.turn-1].end()
+                if (len(self.opponents)
+                   == (len(self.players)*(len(self.players)-1))/2):
+                    self.end_tournament()
+                    break
+            self.turn += 1
+            # On affiche le tableau des scores
+            self.rounds_score()
 
     def __str__(self):
         return ('{} qui a lieu à {} le {} en cadence {}'
@@ -188,6 +210,7 @@ class Round:
 
     def end(self):
         '''Demande le résultat de tout les matchs de la ronde actuelle'''
+        input('Appuyez sur une entrée pour rentrer les résultats...\n')
         for match in self.match_list:
             (result_1, result_2) = match.result()
             self.results.append([match.player1.name, result_1])
@@ -296,7 +319,7 @@ def test():
     tournois = Tournament('Open du Touquet', "Le touquet", '04/09/2021',
                           'Blitz', 'Quelques mots pour la déscription',
                           players=[Lyse, Pierre, Jean, Marc, Yves, Baton, Michel, Kevin])
-    tournois.switzerland()
+    tournois.start_tournament()
 
 
 test()
