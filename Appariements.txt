@@ -38,6 +38,11 @@ Louisette  |     0     |     0     |
  -------------------------------------
 Lyse       |     0     |     0     |
  -------------------------------------
+
+
+
+
+
 Nom de la 2ème ronde :
 Heure de début de ronde : 21:46
 ------------------------------------------------------------
@@ -78,6 +83,11 @@ Louisette  |     0     |    0.5    |    0.5    |
  ------------------------------------------------
 Lyse       |     0     |    0.5    |    0.5    |
  ------------------------------------------------
+
+
+
+
+
 Nom de la 3ème ronde :
 Heure de début de ronde : 21:46
 ------------------------------------------------------------
@@ -118,6 +128,11 @@ Alphonse   |    0.5    |    0.5    |     0     |    1.0    |
  -----------------------------------------------------------
 Pierre     |     0     |    0.5    |     0     |    0.5    |
  -----------------------------------------------------------
+
+
+
+
+
 Nom de la 4ème ronde :
 Heure de début de ronde : 21:46
 ------------------------------------------------------------
@@ -128,3 +143,7 @@ Heure de début de ronde : 21:46
    Lyse     Bellegueule     s'oppose à   Ravier    Dupont
 ------------------------------------------------------------
 Appuyez sur une entrée pour rentrer les résultats...
+
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Il y a un soucis d'appariement ici, Alphonse et Pierre ont déjà joués ensemble à la 2ème ronde, Le programme met pourtant bien ensemble des gens qui n'ont jamais joués (sauf les 2 derniers)

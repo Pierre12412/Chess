@@ -1,21 +1,41 @@
 from operator import attrgetter
 import time
+import consolemenu
 from consolemenu.console_menu import ConsoleMenu
-from consolemenu.items import FunctionItem
+from consolemenu.items import FunctionItem, SubmenuItem
+from consolemenu.selection_menu import SelectionMenu
 from tinydb import TinyDB
 
 
 players = []
+tournaments = []
 
 
 def console_menu():
     menu = ConsoleMenu("Menu de selection", "Choisissez une option")
     function_item1 = FunctionItem('Démarrer un tournois', tournaments_informations)
     function_item2 = FunctionItem('Ajouter un joueur', add_player)
+
+    menu_reports = ConsoleMenu("Menu de Rapports", "Choisissez un rapport")
+    submenu_reports = SubmenuItem('Rapports', menu_reports,menu=menu)
+
+    load_tournament()
+
+    tournaments_menu = ConsoleMenu('Tournois')
+    for tournament in tournaments:
+        tournaments_menu.append_item(FunctionItem(tournament.name, show_data, tournament.name))
+    submenu_item = SubmenuItem("Menu des tournois", tournaments_menu, menu=menu_reports)
+
+    menu_reports.append_item(submenu_item)
+
     menu.append_item(function_item1)
     menu.append_item(function_item2)
+    menu.append_item(submenu_reports)
     menu.show()
 
+def show_data(tournament_name):
+    menu = ConsoleMenu("Menu du tournois : {}".format(tournament_name), "Choisissez des données à afficher")
+    menu.show()
 
 class Tournament:
     def __init__(self, name, place, date, cadence, description,
@@ -201,6 +221,44 @@ class Tournament:
             print('Félicitations au gagnant : {} {}'
                   .format(self.players[0].name, self.players[0].surname))
         input()
+        self.save_tournament()
+        console_menu()
+
+    def save_tournament(self):
+        db = TinyDB('db.json')
+        tournaments_table = db.table('tournaments')
+        rounds_ser = []
+        players_ser = []
+        for ronde in self.rondes_instances:
+            serialized_round = {
+                'round_name': ronde.round_name,
+                'results': ronde.results
+            }
+            rounds_ser.append(serialized_round)
+
+        for player in players:
+            serialized_player = {
+                'name': player.name,
+                'surname': player.surname,
+                'born': player.born,
+                'gender': player.gender,
+                'ranking': player.ranking,
+                'score': 0
+                }
+            players_ser.append(serialized_player)
+        serialized_tournament = {
+            'name': self.name,
+            'place': self.place,
+            'date': self.date,
+            'cadence': self.cadence,
+            'round': self.round,
+            'rondes_instances': rounds_ser,
+            'players': players_ser,
+            'description': self.description,
+            'turn': self.turn,
+            'opponents': self.opponents
+            }
+        tournaments_table.insert(serialized_tournament)
 
 
 class Round:
@@ -276,7 +334,7 @@ def save_players(players=players):
             'born': player.born,
             'gender': player.gender,
             'ranking': player.ranking,
-            'score': 0
+            'score': player.score
             }
         players_table.insert(serialized_player)
 
@@ -303,7 +361,40 @@ def load_players():
         born = serial['born']
         gender = serial['gender']
         ranking = serial['ranking']
-        players.append(Player(name, surname, born, gender, ranking))
+        score = serial['score']
+        players.append(Player(name, surname, born, gender, ranking,score))
+
+
+def load_tournament():
+    db = TinyDB('db.json')
+    tournaments_table = db.table('tournaments')
+    players_no_ser = []
+    round_no_ser = []
+    serialized_tournaments = tournaments_table.all()
+    for serial in serialized_tournaments:
+        place = serial['place']
+        date = serial['date']
+        cadence = serial['cadence']
+        round = serial['round']
+        rondes_instances = serial['rondes_instances']
+        for ronde in rondes_instances:
+            round_name = ronde['round_name']
+            results = ronde['results']
+            round_no_ser.append(Round(round_name,results))
+        players_ser = serial['players']
+        for serial_p in players_ser:
+            name = serial_p['name']
+            surname = serial_p['surname']
+            born = serial_p['born']
+            gender = serial_p['gender']
+            ranking = serial_p['ranking']
+            score = serial_p['score']
+            players_no_ser.append(Player(name,surname,born,gender,ranking,score))
+        name = serial['name']
+        description = serial['description']
+        turn = serial['turn']
+        opponents = serial['opponents']
+        tournaments.append(Tournament(name,place,date,cadence,description,round,round_no_ser,players_no_ser,turn,opponents))
 
 
 def start():
@@ -312,13 +403,19 @@ def start():
 
 
 def tournaments_informations():
+    if len(players) < 4:
+        print('Trop peu de gens pour faire un tournois...')
+        input()
+        console_menu()
     name = str(input('Nom du tournois\n'))
     place = str(input('Lieu du tournois\n'))
     date = str(input('Date du tournois \n'))
-    cadence = str(input('Cadence du tournois'))
-    description = str(input('Description du tournois'))
+    cadence = str(input('Cadence du tournois\n'))
+    description = str(input('Description du tournois\n'))
     tournois = Tournament(name, place, date, cadence, description)
     tournois.start_tournament()
+
+    
 
 
 start()
