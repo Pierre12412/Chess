@@ -1,5 +1,6 @@
 from operator import attrgetter
 import time
+from typing import IO
 import consolemenu
 from consolemenu.console_menu import ConsoleMenu
 from consolemenu.items import FunctionItem, SubmenuItem
@@ -63,12 +64,13 @@ def console_menu():
     menu = ConsoleMenu("Menu de selection", "Choisissez une option")
     function_item1 = FunctionItem('Démarrer un tournois', tournaments_informations)
     function_item3 = FunctionItem('Ajouter un joueur', add_player)
+    function_item4 = FunctionItem('Supprimer un joueur', del_player)
 
     menu_reports = ConsoleMenu("Menu de Rapports", "Choisissez un rapport")
     submenu_reports = SubmenuItem('Rapports', menu_reports,menu=menu)
 
     load_tournament()
-    function_item2 = FunctionItem('Reprendre un tournois', tournaments[1].start_tournament) # to change
+    function_item2 = FunctionItem('Reprendre un tournois', print) # to change
 
     tournaments_menu = ConsoleMenu('Tournois')
     for tournament in tournaments:
@@ -83,6 +85,7 @@ def console_menu():
     menu.append_item(function_item1)
     menu.append_item(function_item2)
     menu.append_item(function_item3)
+    menu.append_item(function_item4)
     menu.append_item(submenu_reports)
     menu.show()
 
@@ -415,6 +418,26 @@ def add_player():
     save_players()
 
 
+def del_player():
+    while True:
+        db = TinyDB('db.json')
+        players_table = db.table('players')
+        names = []
+        for player in players:
+            names.append(player.name)
+        menu = SelectionMenu(names, 'Quel joueur supprimer ?')
+        menu.show()
+        menu.join()
+        selection = menu.selected_option
+        if selection == len(players):
+            menu.exit()
+        else:
+            players_table.remove(where('name') == names[selection])
+            players.pop(selection)
+        break
+
+
+
 def load_players():
     db = TinyDB('db.json')
     players_table = db.table('players')
@@ -434,6 +457,8 @@ def load_tournament():
     tournaments_table = db.table('tournaments')
     players_no_ser = []
     round_no_ser = []
+    player1 = None
+    player2 = None
     match_no_ser = []
     serialized_tournaments = tournaments_table.all()
     for serial in serialized_tournaments:
@@ -454,7 +479,13 @@ def load_tournament():
                         player1 = player
                     if match['player2'] == player.name:
                         player2 = player
-                match_no_ser.append(Match(player1,player2))
+                try:
+                    match_no_ser.append(Match(player1,player2))
+                except :
+                    if player1 == None:
+                        Player(name=match['player1'],surname='',born='',gender='',ranking='')
+                    if player2 == None:
+                        Player(name=match['player2'],surname='',born='',gender='',ranking='')
             round_no_ser.append(Round(round_name,results,match_list=match_no_ser))
         players_ser = serial['players']
         players_no_ser = []
@@ -501,7 +532,10 @@ def remove_tournament():
     menu.join()
     selection = menu.selected_option
     db = TinyDB('db.json')
-    db.update(delete('tournaments'), where('name') == tournaments[selection].name)
-    input()
+    table = db.table('tournaments')
+    table.remove(where('name') == names[selection])
+    tournaments.pop(selection)
+
 
 start()
+
