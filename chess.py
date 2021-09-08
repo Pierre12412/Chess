@@ -3,8 +3,10 @@ import time
 import consolemenu
 from consolemenu.console_menu import ConsoleMenu
 from consolemenu.items import FunctionItem, SubmenuItem
+from consolemenu.items.selection_item import SelectionItem
 from consolemenu.selection_menu import SelectionMenu
-from tinydb import TinyDB
+from tinydb import TinyDB, where
+from tinydb.operations import delete
 
 
 players = []
@@ -60,24 +62,27 @@ def show_data(tournament):
 def console_menu():
     menu = ConsoleMenu("Menu de selection", "Choisissez une option")
     function_item1 = FunctionItem('Démarrer un tournois', tournaments_informations)
-    function_item2 = FunctionItem('Ajouter un joueur', add_player)
+    function_item3 = FunctionItem('Ajouter un joueur', add_player)
 
     menu_reports = ConsoleMenu("Menu de Rapports", "Choisissez un rapport")
     submenu_reports = SubmenuItem('Rapports', menu_reports,menu=menu)
 
     load_tournament()
+    function_item2 = FunctionItem('Reprendre un tournois', tournaments[1].start_tournament) # to change
 
     tournaments_menu = ConsoleMenu('Tournois')
     for tournament in tournaments:
         name = tournament.name
         item = FunctionItem(name, show_data, args=[tournament])
         tournaments_menu.append_item(item)
+    tournaments_menu.append_item(FunctionItem('Supprimer un tournois', remove_tournament))
     submenu_item = SubmenuItem("Menu des tournois", tournaments_menu, menu=menu_reports)
 
     menu_reports.append_item(submenu_item)
 
     menu.append_item(function_item1)
     menu.append_item(function_item2)
+    menu.append_item(function_item3)
     menu.append_item(submenu_reports)
     menu.show()
 
@@ -152,9 +157,6 @@ class Tournament:
                                   key=attrgetter('score', 'ranking'),
                                   reverse=True)
             
-            if roundx.round_name == 'Ronde 3':
-                self.save_tournament()
-                exit()
             # On apparie les joueurs par score
             actual = 0
             while actual < len(self.players) and actual + 1 < len(self.players):
@@ -490,6 +492,16 @@ def tournaments_informations():
     tournois.start_tournament()
 
 
+def remove_tournament():
+    names = []
+    for tournament in tournaments:
+        names.append(tournament.name)
+    menu = SelectionMenu(names, 'Quel tournois à supprimer ?')
+    menu.show()
+    menu.join()
+    selection = menu.selected_option
+    db = TinyDB('db.json')
+    db.update(delete('tournaments'), where('name') == tournaments[selection].name)
+    input()
+
 start()
-
-
