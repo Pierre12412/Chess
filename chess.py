@@ -57,9 +57,6 @@ def show_data(tournament):
     input()
 
 
-
-
-
 def console_menu():
     menu = ConsoleMenu("Menu de selection", "Choisissez une option")
     function_item1 = FunctionItem('Démarrer un tournois', tournaments_informations)
@@ -83,6 +80,7 @@ def console_menu():
     menu.append_item(function_item2)
     menu.append_item(submenu_reports)
     menu.show()
+
 
 class Tournament:
     def __init__(self, name, place, date, cadence, description,
@@ -153,6 +151,10 @@ class Tournament:
             self.players = sorted(self.players,
                                   key=attrgetter('score', 'ranking'),
                                   reverse=True)
+            
+            if roundx.round_name == 'Ronde 3':
+                self.save_tournament()
+                exit()
             # On apparie les joueurs par score
             actual = 0
             while actual < len(self.players) and actual + 1 < len(self.players):
@@ -322,7 +324,7 @@ class Tournament:
 
 
 class Round:
-    def __init__(self, round_name, results=[],match_list=[]):
+    def __init__(self, round_name, results=[], match_list=[]):
         self.match_list = match_list
         self.time_start = time.strftime('%H:%M')
         print('Heure de début de ronde : {}'.format(self.time_start))
@@ -438,6 +440,7 @@ def load_tournament():
         cadence = serial['cadence']
         round = serial['round']
         rondes_instances = serial['rondes_instances']
+        round_no_ser = []
         for ronde in rondes_instances:
             match_no_ser = []
             round_name = ronde['round_name']
@@ -452,6 +455,7 @@ def load_tournament():
                 match_no_ser.append(Match(player1,player2))
             round_no_ser.append(Round(round_name,results,match_list=match_no_ser))
         players_ser = serial['players']
+        players_no_ser = []
         for serial_p in players_ser:
             name = serial_p['name']
             surname = serial_p['surname']
@@ -485,8 +489,7 @@ def tournaments_informations():
     tournois = Tournament(name, place, date, cadence, description,rondes_instances=[])
     tournois.start_tournament()
 
-    
-
 
 start()
+
 
