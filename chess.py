@@ -11,6 +11,52 @@ players = []
 tournaments = []
 
 
+def show_data(tournament):
+    a_list=["Afficher tous les joueurs par ordre alphabétique", "- par classement", "Afficher tous les tours", "Afficher tous les matchs"]
+
+    menu = SelectionMenu(a_list,'Tournois : {}'.format(tournament.name))
+
+    menu.show()
+
+    menu.join()
+
+    selection = menu.selected_option
+    dash = 20* '-'
+    if selection == 0:
+        list_name = []
+        for player in tournament.players:
+            list_name.append(player.name)
+        list_name.sort()
+        for name in list_name:
+            print(name)
+            print(dash)
+    elif selection == 1:
+        classement_sort = tournament.players
+        classement_sort = sorted(classement_sort,
+                              key=attrgetter('ranking'),
+                              reverse=True)
+        for player in classement_sort:
+            print('{:^10}{:^10}'.format(player.name,player.ranking))
+            print(dash)
+    elif selection == 2:
+        for round in tournament.rondes_instances:
+            print(round.round_name)
+            print(dash)
+            for result in round.results:
+                print('{:^10}{:^10}'.format(result[0],result[1]))
+            print(dash)
+    elif selection == 3:
+        for round in tournament.rondes_instances:
+            for match in round.match_list:
+                print("{} s'opposait à {}".format(match.player1.name,match.player2.name))
+    else:
+        menu.exit()
+    input()
+
+
+
+
+
 def console_menu():
     menu = ConsoleMenu("Menu de selection", "Choisissez une option")
     function_item1 = FunctionItem('Démarrer un tournois', tournaments_informations)
@@ -23,7 +69,9 @@ def console_menu():
 
     tournaments_menu = ConsoleMenu('Tournois')
     for tournament in tournaments:
-        tournaments_menu.append_item(FunctionItem(tournament.name, show_data, tournament.name))
+        name = tournament.name
+        item = FunctionItem(name, show_data, args=[tournament])
+        tournaments_menu.append_item(item)
     submenu_item = SubmenuItem("Menu des tournois", tournaments_menu, menu=menu_reports)
 
     menu_reports.append_item(submenu_item)
@@ -31,10 +79,6 @@ def console_menu():
     menu.append_item(function_item1)
     menu.append_item(function_item2)
     menu.append_item(submenu_reports)
-    menu.show()
-
-def show_data(tournament_name):
-    menu = ConsoleMenu("Menu du tournois : {}".format(tournament_name), "Choisissez des données à afficher")
     menu.show()
 
 class Tournament:
@@ -54,12 +98,16 @@ class Tournament:
         self.opponents = opponents
 
     def conditions_duo(self, player1, player2, round):
+        if ((player1.name,player2.name) in self.opponents) or ((player2.name,player1.name) in self.opponents):
+            return False
         for match in round.match_list:
-            if match.player1.name == player1.name or match.player2.name == player2.name or match.player2.name == player1.name or match.player1.name == player2.name:
+            if match.player1.name == player1.name or match.player2.name == player2.name:
+                return False
+            if match.player2.name == player1.name or match.player1.name == player2.name:
                 return False
         in_opp = (player1.name, player2.name) in self.opponents
         in_opp2 = (player2.name, player1.name) in self.opponents
-        return not in_opp or in_opp2
+        return not (in_opp or in_opp2)
 
     def switzerland(self):
         dash = 60*'-'
@@ -67,7 +115,7 @@ class Tournament:
 
         # Si c'est la première ronde, on divise en deux groupes, on apparie
         if self.turn == 1:
-            round0 = Round(round_name=str(input("Nom de la Ronde 1 : ")))
+            round0 = Round(round_name=str(input("Nom de la Ronde 1 : ")),match_list=[],results=[])
             self.players = sorted(self.players,
                                   key=attrgetter('ranking'),
                                   reverse=True)
@@ -98,7 +146,7 @@ class Tournament:
 
         else:
             roundx = Round(str(input("Nom de la {}ème ronde : "
-                                     .format(self.turn))))
+                                     .format(self.turn))),match_list=[],results=[])
             self.players = sorted(self.players,
                                   key=attrgetter('score', 'ranking'),
                                   reverse=True)
@@ -229,10 +277,18 @@ class Tournament:
         tournaments_table = db.table('tournaments')
         rounds_ser = []
         players_ser = []
+        match_ser = []
         for ronde in self.rondes_instances:
+            for match in ronde.match_list:
+                serialized_match = {
+                    'player1': match.player1.name,
+                    'player2': match.player2.name
+                }
+                match_ser.append(serialized_match)
             serialized_round = {
                 'round_name': ronde.round_name,
-                'results': ronde.results
+                'results': ronde.results,
+                'match_list': match_ser
             }
             rounds_ser.append(serialized_round)
 
@@ -262,12 +318,12 @@ class Tournament:
 
 
 class Round:
-    def __init__(self, round_name, results=[]):
-        self.match_list = []
+    def __init__(self, round_name, results=[],match_list=[]):
+        self.match_list = match_list
         self.time_start = time.strftime('%H:%M')
         print('Heure de début de ronde : {}'.format(self.time_start))
         self.time_end = None
-        self.results = []
+        self.results = results
         self.round_name = round_name
 
     def end(self):
@@ -370,6 +426,7 @@ def load_tournament():
     tournaments_table = db.table('tournaments')
     players_no_ser = []
     round_no_ser = []
+    match_no_ser = []
     serialized_tournaments = tournaments_table.all()
     for serial in serialized_tournaments:
         place = serial['place']
@@ -380,7 +437,15 @@ def load_tournament():
         for ronde in rondes_instances:
             round_name = ronde['round_name']
             results = ronde['results']
-            round_no_ser.append(Round(round_name,results))
+            match_list = ronde['match_list']
+            for match in match_list:
+                for player in players:
+                    if match['player1'] == player.name:
+                        player1 = player
+                    if match['player2'] == player.name:
+                        player2 = player
+                match_no_ser.append(Match(player1,player2))
+            round_no_ser.append(Round(round_name,results,match_list=match_no_ser))
         players_ser = serial['players']
         for serial_p in players_ser:
             name = serial_p['name']
@@ -412,10 +477,11 @@ def tournaments_informations():
     date = str(input('Date du tournois \n'))
     cadence = str(input('Cadence du tournois\n'))
     description = str(input('Description du tournois\n'))
-    tournois = Tournament(name, place, date, cadence, description)
+    tournois = Tournament(name, place, date, cadence, description,rondes_instances=[])
     tournois.start_tournament()
 
     
 
 
 start()
+
