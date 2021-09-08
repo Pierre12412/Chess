@@ -47,8 +47,11 @@ def show_data(tournament):
             print(dash)
     elif selection == 3:
         for round in tournament.rondes_instances:
+            print(round.round_name)
+            print(dash)
             for match in round.match_list:
                 print("{} s'opposait à {}".format(match.player1.name,match.player2.name))
+                print(dash)
     else:
         menu.exit()
     input()
@@ -279,6 +282,7 @@ class Tournament:
         players_ser = []
         match_ser = []
         for ronde in self.rondes_instances:
+            match_ser = []
             for match in ronde.match_list:
                 serialized_match = {
                     'player1': match.player1.name,
@@ -435,6 +439,7 @@ def load_tournament():
         round = serial['round']
         rondes_instances = serial['rondes_instances']
         for ronde in rondes_instances:
+            match_no_ser = []
             round_name = ronde['round_name']
             results = ronde['results']
             match_list = ronde['match_list']
