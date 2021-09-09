@@ -15,6 +15,7 @@ tournaments = []
 
 
 def show_data(tournament):
+    '''Menu de selection et affichage des données'''
     a_list=["Afficher tous les joueurs par ordre alphabétique", "- par classement", "Afficher tous les tours", "Afficher tous les matchs"]
 
     menu = SelectionMenu(a_list,'Tournois : {}'.format(tournament.name))
@@ -61,6 +62,7 @@ def show_data(tournament):
 
 
 def console_menu():
+    '''Menu Principal'''
     menu = ConsoleMenu("Menu de selection", "Choisissez une option")
     function_item1 = FunctionItem('Démarrer un tournois', tournaments_informations)
     function_item3 = FunctionItem('Ajouter un joueur', add_player)
@@ -70,7 +72,7 @@ def console_menu():
     submenu_reports = SubmenuItem('Rapports', menu_reports,menu=menu)
 
     load_tournament()
-    function_item2 = FunctionItem('Reprendre un tournois', print) # to change
+    function_item2 = FunctionItem('Reprendre un tournois', resume_tournament)
 
     tournaments_menu = ConsoleMenu('Tournois')
     for tournament in tournaments:
@@ -107,6 +109,7 @@ class Tournament:
         self.opponents = opponents
 
     def conditions_duo(self, player1, player2, round):
+        '''Conditions pour que 2 joueurs soient appariés'''
         if ((player1.name,player2.name) in self.opponents) or ((player2.name,player1.name) in self.opponents):
             return False
         for match in round.match_list:
@@ -159,13 +162,13 @@ class Tournament:
             self.players = sorted(self.players,
                                   key=attrgetter('score', 'ranking'),
                                   reverse=True)
-            
+
             # On apparie les joueurs par score
             actual = 0
             while actual < len(self.players) and actual + 1 < len(self.players):
                 next = actual + 1
                 matched = False
-                while matched == False and (next < len(self.players)):
+                while matched is False and (next < len(self.players)):
                     if self.conditions_duo(self.players[actual], self.players[next], roundx):
                         matched = True
                         match = Match(self.players[actual], self.players[next])
@@ -236,17 +239,20 @@ class Tournament:
         while self.turn != self.round:
             if self.turn == 1:
                 self.switzerland()
-                self.rondes_instances[0].end()
+                exit_yorn = self.rondes_instances[0].end()
             else:
                 self.switzerland()
-                self.rondes_instances[self.turn-1].end()
+                exit_yorn = self.rondes_instances[self.turn-1].end()
+            if exit_yorn == 'exit':
+                self.save_tournament()
+                exit()
 
                 # Nombre d'appariements max pour un nombre de personne
                 # Pour 4 : (4*3)/2 = 6 couples possibles
-                if (len(self.opponents)
-                   == (len(self.players)*(len(self.players)-1))/2):
-                    self.end_tournament()
-                    break
+            if (len(self.opponents)
+                == (len(self.players)*(len(self.players)-1))/2):
+                self.end_tournament()
+                break
 
             self.turn += 1
             # On affiche le tableau des scores
@@ -283,6 +289,7 @@ class Tournament:
         console_menu()
 
     def save_tournament(self):
+        '''Sauvegarde le tournois actuel'''
         db = TinyDB('db.json')
         tournaments_table = db.table('tournaments')
         rounds_ser = []
@@ -341,9 +348,17 @@ class Round:
         '''Demande le résultat de tout les matchs de la ronde actuelle'''
         input('Appuyez sur une entrée pour rentrer les résultats...\n')
         for match in self.match_list:
-            (result_1, result_2) = match.result()
-            self.results.append([match.player1.name, result_1])
-            self.results.append([match.player2.name, result_2])
+            already_played = False
+            for result in self.results:
+                [name,score] = result
+                if name == match.player1.name or name == match.player2.name:
+                    already_played = True
+            if not already_played:
+                (result_1, result_2) = match.result()
+                if result_1 == -1:
+                    return 'exit'
+                self.results.append([match.player1.name, result_1])
+                self.results.append([match.player2.name, result_2])
         self.time_end = time.strftime('%H:%M')
         print('Heure de fin de ronde : {}'.format(self.time_end))
 
@@ -375,6 +390,8 @@ class Match:
             elif result == '0-1':
                 self.player2.score += 1
                 return (0, 1)
+            elif result == 'exit':
+                return(-1,-1)
             else:
                 print("Ce n'est pas un résultat valide, réessayez")
                 continue
@@ -391,6 +408,7 @@ class Player:
 
 
 def save_players(players=players):
+    '''Sauvegarde les joueurs de la liste "players"'''
     db = TinyDB('db.json')
     players_table = db.table('players')
     players_table.truncate()  
@@ -407,6 +425,7 @@ def save_players(players=players):
 
 
 def add_player():
+    '''Créer un joueur'''
     name = str(input('Prénom du joueur à ajouter \n'))
     surname = str(input('Nom du joueur à ajouter\n'))
     born = str(input('Date de naissance du joueur à ajouter\n'))
@@ -419,6 +438,9 @@ def add_player():
 
 
 def del_player():
+    '''Supprime un joueur si il n'est pas lié
+    à un tournois en base de donnée'''
+    can_delete = True
     while True:
         db = TinyDB('db.json')
         players_table = db.table('players')
@@ -432,13 +454,24 @@ def del_player():
         if selection == len(players):
             menu.exit()
         else:
-            players_table.remove(where('name') == names[selection])
-            players.pop(selection)
+            for tournament in tournaments:
+                for player in tournament.players:
+                    if player.name == players[selection].name:
+                        print('Vous ne pouvez pas supprimer ce joueur, il fait parti du tournois : {}'.format(tournament.name))
+                        print('Supprimez le tournois dans la base de donnée pour supprimer ce joueur')
+                        input()
+                        can_delete = False
+            if can_delete:
+                players_table.remove(where('name') == names[selection])
+                players.pop(selection)
+            else:
+                continue
         break
 
 
-
 def load_players():
+    '''Charge tout les joueurs vers la liste "players"
+    depuis la base de donnée'''
     db = TinyDB('db.json')
     players_table = db.table('players')
     serialized_players = players_table.all()
@@ -453,6 +486,8 @@ def load_players():
 
 
 def load_tournament():
+    '''Charge les tournois vers la liste tournaments
+    depuis la base de donnée'''
     db = TinyDB('db.json')
     tournaments_table = db.table('tournaments')
     players_no_ser = []
@@ -479,13 +514,7 @@ def load_tournament():
                         player1 = player
                     if match['player2'] == player.name:
                         player2 = player
-                try:
-                    match_no_ser.append(Match(player1,player2))
-                except :
-                    if player1 == None:
-                        Player(name=match['player1'],surname='',born='',gender='',ranking='')
-                    if player2 == None:
-                        Player(name=match['player2'],surname='',born='',gender='',ranking='')
+                match_no_ser.append(Match(player1,player2))
             round_no_ser.append(Round(round_name,results,match_list=match_no_ser))
         players_ser = serial['players']
         players_no_ser = []
@@ -510,6 +539,7 @@ def start():
 
 
 def tournaments_informations():
+    '''Demande les informations relatives au tournois'''
     if len(players) < 4:
         print('Trop peu de gens pour faire un tournois...')
         input()
@@ -524,6 +554,7 @@ def tournaments_informations():
 
 
 def remove_tournament():
+    '''Supprime un tournois de la base de donnée avec un affichage'''
     names = []
     for tournament in tournaments:
         names.append(tournament.name)
@@ -536,6 +567,40 @@ def remove_tournament():
     table.remove(where('name') == names[selection])
     tournaments.pop(selection)
 
+def del_tournament(tournament):
+    '''Supprime un tournois de la base de donnée sans affichage'''
+    db = TinyDB('db.json')
+    table = db.table('tournaments')
+    table.remove(where('name') == tournament.name)
+    for i in range(len(tournaments)-1):
+        if tournaments[i].name == tournament.name:
+            tournaments.pop(i)
+
+def resume_tournament():
+    names = []
+    selections = []
+    for tournament in tournaments:
+        for ronde in tournament.rondes_instances:
+            if len(ronde.results) != len(tournament.players) or tournament.turn != tournament.round:
+                names.append(tournament.name)
+                selections.append(tournament)
+                break
+    menu = SelectionMenu(names, 'Quel tournois continuer ?')
+    menu.show()
+    menu.join()
+    selection = menu.selected_option
+    to_continue = selections[selection]
+    for round in to_continue.rondes_instances:
+        if len(round.results) != len(to_continue.players):
+            print('Reprise au round : {}'.format(round.round_name))
+            exit_yor = round.end()
+            to_continue.turn += 1
+            del_tournament(to_continue)
+            to_continue.save_tournament()
+            if exit_yor == 'exit':
+                exit()
+            else:
+                to_continue.start_tournament()
+
 
 start()
-
