@@ -244,6 +244,7 @@ class Tournament:
                 self.switzerland()
                 exit_yorn = self.rondes_instances[self.turn-1].end()
             if exit_yorn == 'exit':
+                del_tournament(self)
                 self.save_tournament()
                 exit()
 
@@ -285,6 +286,7 @@ class Tournament:
             print('Félicitations au gagnant : {} {}'
                   .format(self.players[0].name, self.players[0].surname))
         input()
+        del_tournament(self)
         self.save_tournament()
         console_menu()
 
