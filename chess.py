@@ -66,28 +66,30 @@ def console_menu():
     menu = ConsoleMenu("Menu de selection", "Choisissez une option")
     function_item1 = FunctionItem('Démarrer un tournois', tournaments_informations)
     function_item3 = FunctionItem('Ajouter un joueur', add_player)
+    function_item5 = FunctionItem('Liste des joueurs', show_players)
     function_item4 = FunctionItem('Supprimer un joueur', del_player)
 
     menu_reports = ConsoleMenu("Menu de Rapports", "Choisissez un rapport")
     submenu_reports = SubmenuItem('Rapports', menu_reports,menu=menu)
 
-    load_tournament()
     function_item2 = FunctionItem('Reprendre un tournois', resume_tournament)
 
     tournaments_menu = ConsoleMenu('Tournois')
+    items = []
     for tournament in tournaments:
         name = tournament.name
         item = FunctionItem(name, show_data, args=[tournament])
         tournaments_menu.append_item(item)
-    tournaments_menu.append_item(FunctionItem('Supprimer un tournois', remove_tournament))
+        items.append(item)
+    tournaments_menu.append_item(FunctionItem('Supprimer un tournois', remove_tournament, args=[tournaments_menu,items]))
     submenu_item = SubmenuItem("Menu des tournois", tournaments_menu, menu=menu_reports)
-
     menu_reports.append_item(submenu_item)
 
     menu.append_item(function_item1)
     menu.append_item(function_item2)
     menu.append_item(function_item3)
     menu.append_item(function_item4)
+    menu.append_item(function_item5)
     menu.append_item(submenu_reports)
     menu.show()
 
@@ -439,6 +441,16 @@ def add_player():
     save_players()
 
 
+def show_players():
+    dash = '-'*30
+    space = '\n'*3
+    print(space,dash)
+    for player in players:
+        print('{:^10}{:^10}'.format(player.name,player.surname))
+        print(dash)
+    input('Appuyez sur entrée pour revenir au menu principal')
+
+
 def del_player():
     '''Supprime un joueur si il n'est pas lié
     à un tournois en base de donnée'''
@@ -537,6 +549,7 @@ def load_tournament():
 
 def start():
     load_players()
+    load_tournament()
     console_menu()
 
 
@@ -555,7 +568,7 @@ def tournaments_informations():
     tournois.start_tournament()
 
 
-def remove_tournament():
+def remove_tournament(tourn_menu,items):
     '''Supprime un tournois de la base de donnée avec un affichage'''
     names = []
     for tournament in tournaments:
@@ -566,8 +579,13 @@ def remove_tournament():
     selection = menu.selected_option
     db = TinyDB('db.json')
     table = db.table('tournaments')
-    table.remove(where('name') == names[selection])
-    tournaments.pop(selection)
+    try:
+        table.remove(where('name') == names[selection])
+        tournaments.pop(selection)
+        tourn_menu.remove_item(items[selection])
+    except IndexError:
+        pass
+    tourn_menu.show()
 
 def del_tournament(tournament):
     '''Supprime un tournois de la base de donnée sans affichage'''
@@ -591,18 +609,21 @@ def resume_tournament():
     menu.show()
     menu.join()
     selection = menu.selected_option
-    to_continue = selections[selection]
-    for round in to_continue.rondes_instances:
-        if len(round.results) != len(to_continue.players):
-            print('Reprise au round : {}'.format(round.round_name))
-            exit_yor = round.end()
-            to_continue.turn += 1
-            del_tournament(to_continue)
-            to_continue.save_tournament()
-            if exit_yor == 'exit':
-                exit()
-            else:
-                to_continue.start_tournament()
+    try:
+        to_continue = selections[selection]
+        for round in to_continue.rondes_instances:
+            if len(round.results) != len(to_continue.players):
+                print('Reprise au round : {}'.format(round.round_name))
+                exit_yor = round.end()
+                to_continue.turn += 1
+                del_tournament(to_continue)
+                to_continue.save_tournament()
+                if exit_yor == 'exit':
+                    exit()
+                else:
+                    to_continue.start_tournament()
+    except IndexError:
+        pass
 
 
 start()
