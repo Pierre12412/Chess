@@ -112,15 +112,13 @@ class Tournament:
 
     def conditions_duo(self, player1, player2, round):
         '''Conditions pour que 2 joueurs soient appariés'''
-        if ((player1.name,player2.name) in self.opponents) or ((player2.name,player1.name) in self.opponents):
-            return False
         for match in round.match_list:
             if match.player1.name == player1.name or match.player2.name == player2.name:
                 return False
             if match.player2.name == player1.name or match.player1.name == player2.name:
                 return False
-        in_opp = (player1.name, player2.name) in self.opponents
-        in_opp2 = (player2.name, player1.name) in self.opponents
+        in_opp = [player1.name, player2.name] in self.opponents
+        in_opp2 = [player2.name, player1.name] in self.opponents
         return not (in_opp or in_opp2)
 
     def switzerland(self):
@@ -152,7 +150,7 @@ class Tournament:
             for i in range(len(first_part)):
                 match = Match(first_part[i], second_part[i])
                 self.opponents.append(
-                    (first_part[i].name, second_part[i].name)
+                    [first_part[i].name, second_part[i].name]
                     )
                 print(dash)
                 print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
@@ -180,35 +178,42 @@ class Tournament:
 
             # On apparie les joueurs par score
             actual = 0
-            while actual < len(self.players) and actual + 1 < len(self.players):
-                next = actual + 1
-                matched = False
-                while matched is False and (next < len(self.players)):
-                    if self.conditions_duo(self.players[actual], self.players[next], roundx):
-                        matched = True
-                        match = Match(self.players[actual], self.players[next])
+            next = 1
+            while True:
+                while actual < len(self.players) and actual + 1 < len(self.players):
+                    matched = False
+                    while matched is False and (next < len(self.players)):
+                        if self.conditions_duo(self.players[actual], self.players[next], roundx):
+                            matched = True
+                            match = Match(self.players[actual], self.players[next])
 
-                        # On ajoute les matchs a la ronde x
-                        roundx.match_list.append(match)
-                        self.opponents.append(
-                            (self.players[actual].name, self.players[next].name)
-                            )
-                        print(dash)
-                        print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
-                            .format(self.players[actual].name,
-                                    self.players[actual].surname,
-                                    self.players[next].name,
-                                    self.players[next].surname))
+                            # On ajoute les matchs a la ronde x
+                            roundx.match_list.append(match)
+                            self.opponents.append(
+                                [self.players[actual].name, self.players[next].name]
+                                )
+                            print(dash)
+                            print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
+                                .format(self.players[actual].name,
+                                        self.players[actual].surname,
+                                        self.players[next].name,
+                                        self.players[next].surname))
+                        else:
+                            next += 1
+
+                    if next == actual + 1:
+                        actual += 2
+                        next = actual + 1
                     else:
-                        next += 1
-
-                if next == actual + 1:
-                    actual += 2
-                else:
-                    actual += 1
-            print(dash)
-            if len(roundx.match_list) != (len(self.players)/2):
-                print('Problème')
+                        actual += 1
+                        next = actual + 1
+                if len(roundx.match_list) != (len(self.players)/2):
+                    print('Problème')
+                    next = 2
+                    actual = 0
+                    continue
+                print(dash)
+                break
             # On ajoute la ronde au tournois
             self.rondes_instances.append(roundx)
 
@@ -303,6 +308,8 @@ class Tournament:
         input()
         del_tournament(self)
         self.save_tournament()
+        for player in players:
+            player.score = 0
         console_menu()
 
     def save_tournament(self):
@@ -626,6 +633,12 @@ def resume_tournament():
         dash = 50*'-'
         to_continue = selections[selection]
         for round in to_continue.rondes_instances:
+            for result in round.results:
+                [name,score] = result
+                for player in to_continue.players:
+                    if player.name == name:
+                        player.score += score
+        for round in to_continue.rondes_instances:
             if len(round.results) != len(to_continue.players) or len(round.results) == 0:
                 print('Reprise au round : {}'.format(round.round_name))
                 for match in round.match_list:
@@ -640,7 +653,7 @@ def resume_tournament():
                     exit()
                 else:
                     to_continue.start_tournament()
-            elif len(to_continue.rondes_instances) != (to_continue.round - 1) and to_continue.turn != to_continue.round and round == to_continue.rondes_instances[-1]:
+            elif len(to_continue.rondes_instances) != (to_continue.round - 1) and to_continue.turn != to_continue.round:
                 to_continue.start_tournament()
 
     except IndexError:
