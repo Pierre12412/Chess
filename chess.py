@@ -1,13 +1,9 @@
 from operator import attrgetter
 import time
-from typing import IO
-import consolemenu
 from consolemenu.console_menu import ConsoleMenu
-from consolemenu.items import FunctionItem, SubmenuItem
-from consolemenu.items.selection_item import SelectionItem
+from consolemenu.items import FunctionItem
 from consolemenu.selection_menu import SelectionMenu
 from tinydb import TinyDB, where
-from tinydb.operations import delete
 
 
 players = []
@@ -16,16 +12,19 @@ tournaments = []
 
 def show_data(tournament):
     '''Menu de selection et affichage des données'''
-    a_list=["Afficher tous les joueurs par ordre alphabétique", "- par classement", "Afficher tous les tours", "Afficher tous les matchs"]
+    a_list = ["Afficher tous les joueurs par ordre alphabétique",
+              "- par classement",
+              "Afficher tous les tours",
+              "Afficher tous les matchs"]
 
-    menu = SelectionMenu(a_list,'Tournois : {}'.format(tournament.name))
+    menu = SelectionMenu(a_list, 'Tournois : {}'.format(tournament.name))
 
     menu.show()
 
     menu.join()
 
     selection = menu.selected_option
-    dash = 20* '-'
+    dash = 20 * '-'
     if selection == 0:
         list_name = []
         for player in tournament.players:
@@ -37,24 +36,26 @@ def show_data(tournament):
     elif selection == 1:
         classement_sort = tournament.players
         classement_sort = sorted(classement_sort,
-                              key=attrgetter('ranking'),
-                              reverse=True)
+                                 key=attrgetter('ranking'),
+                                 reverse=True)
         for player in classement_sort:
-            print('{:^10}{:^10}'.format(player.name,player.ranking))
+            print('{:^10}{:^10}'.format(player.name, player.ranking))
             print(dash)
     elif selection == 2:
         for round in tournament.rondes_instances:
             print(round.round_name)
             print(dash)
             for result in round.results:
-                print('{:^10}{:^10}'.format(result[0],result[1]))
+                print('{:^10}{:^10}'.format(result[0], result[1]))
             print(dash)
     elif selection == 3:
         for round in tournament.rondes_instances:
             print(round.round_name)
             print(dash)
             for match in round.match_list:
-                print("{} s'opposait à {}".format(match.player1.name,match.player2.name))
+                print("{} s'opposait à {}".format(
+                     match.player1.name, match.player2.name)
+                     )
                 print(dash)
     else:
         menu.exit()
@@ -64,15 +65,15 @@ def show_data(tournament):
 def console_menu():
     '''Menu Principal'''
     menu = ConsoleMenu("Menu de selection", "Choisissez une option")
-    function_item1 = FunctionItem('Démarrer un tournois', tournaments_informations, should_exit=True)
+    function_item1 = FunctionItem('Démarrer un tournois',
+                                  tournaments_informations, should_exit=True)
     function_item3 = FunctionItem('Ajouter un joueur', add_player)
     function_item5 = FunctionItem('Liste des joueurs', show_players)
     function_item4 = FunctionItem('Supprimer un joueur', del_player)
 
-    submenu_reports = FunctionItem('Rapports',tournament_console)
+    submenu_reports = FunctionItem('Rapports', tournament_console)
 
     function_item2 = FunctionItem('Reprendre un tournois', resume_tournament)
-
 
     menu.append_item(function_item1)
     menu.append_item(function_item2)
@@ -81,6 +82,7 @@ def console_menu():
     menu.append_item(function_item5)
     menu.append_item(submenu_reports)
     menu.show()
+
 
 def tournament_console():
     global tournaments
@@ -91,8 +93,11 @@ def tournament_console():
         name = tournament.name
         item = FunctionItem(name, show_data, args=[tournament])
         tournaments_menu.append_item(item)
-    tournaments_menu.append_item(FunctionItem('Supprimer un tournois', remove_tournament,should_exit=True))
+    tournaments_menu.append_item(FunctionItem('Supprimer un tournois',
+                                              remove_tournament,
+                                              should_exit=True))
     return tournaments_menu.show()
+
 
 class Tournament:
     def __init__(self, name, place, date, cadence, description,
@@ -113,9 +118,11 @@ class Tournament:
     def conditions_duo(self, player1, player2, round):
         '''Conditions pour que 2 joueurs soient appariés'''
         for match in round.match_list:
-            if match.player1.name == player1.name or match.player2.name == player2.name:
+            if (match.player1.name == player1.name
+                    or match.player2.name == player2.name):
                 return False
-            if match.player2.name == player1.name or match.player1.name == player2.name:
+            if (match.player2.name == player1.name
+                    or match.player1.name == player2.name):
                 return False
         in_opp = [player1.name, player2.name] in self.opponents
         in_opp2 = [player2.name, player1.name] in self.opponents
@@ -123,14 +130,15 @@ class Tournament:
 
     def switzerland(self):
         dash = 60*'-'
+
         '''Met en place le système d'appariement Suisse'''
 
         # Si c'est la première ronde, on divise en deux groupes, on apparie
         if self.turn == 1:
             while True:
                 name = str(input("Nom de la Ronde 1 : "))
-                if name != 'exit':  
-                    round0 = Round(round_name=name,match_list=[],results=[])
+                if name != 'exit':
+                    round0 = Round(round_name=name, match_list=[], results=[])
                     break
                 else:
                     print("Vous ne pouvez pas sortir d'un tournois non créer")
@@ -165,9 +173,9 @@ class Tournament:
 
         else:
             name = str(input("Nom de la {}ème ronde : "
-                                     .format(self.turn)))
-            if name != 'exit':  
-                roundx = Round(round_name=name,match_list=[],results=[])
+                             .format(self.turn)))
+            if name != 'exit':
+                roundx = Round(round_name=name, match_list=[], results=[])
             else:
                 del_tournament(self)
                 self.save_tournament()
@@ -182,19 +190,25 @@ class Tournament:
             pb = 1
             opp = []
             while True:
-                while actual < len(self.players) and actual + 1 < len(self.players):
+                while (actual < len(self.players)
+                        and actual + 1 < len(self.players)):
                     matched = False
                     while matched is False and (next < len(self.players)):
-                        if self.conditions_duo(self.players[actual], self.players[next], roundx):
+                        if self.conditions_duo(self.players[actual],
+                                               self.players[next],
+                                               roundx):
                             matched = True
-                            match = Match(self.players[actual], self.players[next])
+                            match = Match(self.players[actual],
+                                          self.players[next])
 
                             # On ajoute les matchs a la ronde x
                             roundx.match_list.append(match)
                             self.opponents.append(
-                                [self.players[actual].name, self.players[next].name]
+                                [self.players[actual].name,
+                                 self.players[next].name]
                                 )
-                            opp.append([self.players[actual], self.players[next]])
+                            opp.append([self.players[actual],
+                                        self.players[next]])
                         else:
                             next += 1
 
@@ -209,21 +223,21 @@ class Tournament:
                 if len(roundx.match_list) != (len(self.players)/2):
                     roundx.match_list = []
                     for couple in opp:
-                        [c1,c2] = couple
-                        self.opponents.remove([c1.name,c2.name])
+                        [c1, c2] = couple
+                        self.opponents.remove([c1.name, c2.name])
                     opp = []
                     next = pb + 1
                     pb += 1
                     actual = 0
                     continue
                 for couple in opp:
-                    [player_name1,player_name2] = couple
+                    [player_name1, player_name2] = couple
                     print(dash)
                     print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
-                        .format(player_name1.name,
-                                player_name1.surname,
-                                player_name2.name,
-                                player_name2.surname))
+                          .format(player_name1.name,
+                                  player_name1.surname,
+                                  player_name2.name,
+                                  player_name2.surname))
                 print(dash)
                 break
             # On ajoute la ronde au tournois
@@ -283,7 +297,7 @@ class Tournament:
                 # Nombre d'appariements max pour un nombre de personne
                 # Pour 4 : (4*3)/2 = 6 couples possibles
             if (len(self.opponents)
-                == (len(self.players)*(len(self.players)-1))/2):
+                    == (len(self.players)*(len(self.players)-1))/2):
                 self.end_tournament()
                 break
 
@@ -386,7 +400,7 @@ class Round:
         for match in self.match_list:
             already_played = False
             for result in self.results:
-                [name,score] = result
+                [name, score] = result
                 if name == match.player1.name or name == match.player2.name:
                     already_played = True
             if not already_played:
@@ -427,7 +441,7 @@ class Match:
                 self.player2.score += 1
                 return (0, 1)
             elif result == 'exit':
-                return(-1,-1)
+                return(-1, -1)
             else:
                 print("Ce n'est pas un résultat valide, réessayez")
                 continue
@@ -447,7 +461,7 @@ def save_players(players=players):
     '''Sauvegarde les joueurs de la liste "players"'''
     db = TinyDB('db.json')
     players_table = db.table('players')
-    players_table.truncate()  
+    players_table.truncate()
     for player in players:
         serialized_player = {
             'name': player.name,
@@ -476,9 +490,9 @@ def add_player():
 def show_players():
     dash = '-'*30
     space = '\n'*3
-    print(space,dash)
+    print(space, dash)
     for player in players:
-        print('{:^10}{:^10}'.format(player.name,player.surname))
+        print('{:^10}{:^10}'.format(player.name, player.surname))
         print(dash)
     input('Appuyez sur entrée pour revenir au menu principal')
 
@@ -503,8 +517,11 @@ def del_player():
             for tournament in tournaments:
                 for player in tournament.players:
                     if player.name == players[selection].name:
-                        print('Vous ne pouvez pas supprimer ce joueur, il fait parti du tournois : {}'.format(tournament.name))
-                        print('Supprimez le tournois dans la base de donnée pour supprimer ce joueur')
+                        print('Vous ne pouvez pas supprimer ce joueur, '
+                              'il fait parti du tournois : {}'
+                              .format(tournament.name))
+                        print('Supprimez le tournois dans la base de donnée '
+                              'pour supprimer ce joueur')
                         input()
                         can_delete = False
             if can_delete:
@@ -528,7 +545,7 @@ def load_players():
         gender = serial['gender']
         ranking = serial['ranking']
         score = serial['score']
-        players.append(Player(name, surname, born, gender, ranking,score))
+        players.append(Player(name, surname, born, gender, ranking, score))
 
 
 def load_tournament():
@@ -560,8 +577,10 @@ def load_tournament():
                         player1 = player
                     if match['player2'] == player.name:
                         player2 = player
-                match_no_ser.append(Match(player1,player2))
-            round_no_ser.append(Round(round_name,results,match_list=match_no_ser))
+                match_no_ser.append(Match(player1, player2))
+            round_no_ser.append(Round(round_name,
+                                      results,
+                                      match_list=match_no_ser))
         players_ser = serial['players']
         players_no_ser = []
         for serial_p in players_ser:
@@ -571,18 +590,21 @@ def load_tournament():
             gender = serial_p['gender']
             ranking = serial_p['ranking']
             score = serial_p['score']
-            players_no_ser.append(Player(name,surname,born,gender,ranking,score))
+            players_no_ser.append(Player(name,
+                                         surname,
+                                         born,
+                                         gender,
+                                         ranking,
+                                         score))
         name = serial['name']
         description = serial['description']
         turn = serial['turn']
         opponents = serial['opponents']
-        tournaments.append(Tournament(name,place,date,cadence,description,round,round_no_ser,players_no_ser,turn,opponents))
-
-
-def start():
-    load_players()
-    load_tournament()
-    console_menu()
+        tournaments.append(Tournament(name, place,
+                                      date, cadence,
+                                      description, round,
+                                      round_no_ser, players_no_ser,
+                                      turn, opponents))
 
 
 def tournaments_informations():
@@ -591,21 +613,26 @@ def tournaments_informations():
         print('Trop peu de gens pour faire un tournois...')
         input()
         console_menu()
+    print('Vous pouvez quitter à tout moment en tappant exit \n')
     while True:
         try:
             nb_round = int(input('Combien de rondes voulez-vous ?'
-                                 ' {} rondes possibles \n'.format(str(len(players)-1))))
+                                 ' {} rondes possibles \n'
+                                 .format(str(len(players)-1))))
             if nb_round > len(players)-1 or nb_round < 0:
                 raise ValueError
             break
-        except:
-            print("That's not a valid option!")
+        except ValueError:
+            print("Réponse non valide")
     name = str(input('Nom du tournois\n'))
     place = str(input('Lieu du tournois\n'))
     date = str(input('Date du tournois \n'))
     cadence = str(input('Cadence du tournois\n'))
     description = str(input('Description du tournois\n'))
-    tournois = Tournament(name, place, date, cadence, description,rondes_instances=[],round=nb_round)
+    tournois = Tournament(name, place,
+                          date, cadence,
+                          description, rondes_instances=[],
+                          round=nb_round)
     tournois.start_tournament()
 
 
@@ -658,17 +685,21 @@ def resume_tournament():
         to_continue = selections[selection]
         for round in to_continue.rondes_instances:
             for result in round.results:
-                [name,score] = result
+                [name, score] = result
                 for player in to_continue.players:
                     if player.name == name:
                         player.score += score
         for round in to_continue.rondes_instances:
-            if len(round.results) != len(to_continue.players) or (len(round.results) == 0 and round.round_name != None):
+            if (len(round.results) != len(to_continue.players)
+               or (len(round.results) == 0 and round.round_name is not None)):
                 print('Reprise au round : {}'.format(round.round_name))
                 for match in round.match_list:
                     print(dash)
-                    print('{:^13}{:^13}{:^13}'.format(match.player1.name,"s'oppose à",match.player2.name))
-                print(dash,'\n')
+                    print('{:^13}{:^13}{:^13}'.format(
+                                                    match.player1.name,
+                                                    "s'oppose à",
+                                                    match.player2.name))
+                print(dash, '\n')
                 exit_yor = round.end()
                 to_continue.turn += 1
                 del_tournament(to_continue)
@@ -681,6 +712,12 @@ def resume_tournament():
                 to_continue.start_tournament()
     except IndexError:
         pass
+
+
+def start():
+    load_players()
+    load_tournament()
+    console_menu()
 
 
 start()
