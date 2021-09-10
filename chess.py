@@ -64,26 +64,15 @@ def show_data(tournament):
 def console_menu():
     '''Menu Principal'''
     menu = ConsoleMenu("Menu de selection", "Choisissez une option")
-    function_item1 = FunctionItem('Démarrer un tournois', tournaments_informations)
+    function_item1 = FunctionItem('Démarrer un tournois', tournaments_informations, should_exit=True)
     function_item3 = FunctionItem('Ajouter un joueur', add_player)
     function_item5 = FunctionItem('Liste des joueurs', show_players)
     function_item4 = FunctionItem('Supprimer un joueur', del_player)
 
-    menu_reports = ConsoleMenu("Menu de Rapports", "Choisissez un rapport")
-    submenu_reports = SubmenuItem('Rapports', menu_reports,menu=menu)
+    submenu_reports = FunctionItem('Rapports',tournament_console)
 
     function_item2 = FunctionItem('Reprendre un tournois', resume_tournament)
 
-    tournaments_menu = ConsoleMenu('Tournois')
-    items = []
-    for tournament in tournaments:
-        name = tournament.name
-        item = FunctionItem(name, show_data, args=[tournament])
-        tournaments_menu.append_item(item)
-        items.append(item)
-    tournaments_menu.append_item(FunctionItem('Supprimer un tournois', remove_tournament, args=[tournaments_menu,items]))
-    submenu_item = SubmenuItem("Menu des tournois", tournaments_menu, menu=menu_reports)
-    menu_reports.append_item(submenu_item)
 
     menu.append_item(function_item1)
     menu.append_item(function_item2)
@@ -93,6 +82,17 @@ def console_menu():
     menu.append_item(submenu_reports)
     menu.show()
 
+def tournament_console():
+    global tournaments
+    tournaments = []
+    load_tournament()
+    tournaments_menu = ConsoleMenu('Tournois')
+    for tournament in tournaments:
+        name = tournament.name
+        item = FunctionItem(name, show_data, args=[tournament])
+        tournaments_menu.append_item(item)
+    tournaments_menu.append_item(FunctionItem('Supprimer un tournois', remove_tournament,should_exit=True))
+    return tournaments_menu.show()
 
 class Tournament:
     def __init__(self, name, place, date, cadence, description,
@@ -213,6 +213,7 @@ class Tournament:
                         self.opponents.remove([c1.name,c2.name])
                     opp = []
                     next = pb + 1
+                    pb += 1
                     actual = 0
                     continue
                 for couple in opp:
@@ -594,6 +595,8 @@ def tournaments_informations():
         try:
             nb_round = int(input('Combien de rondes voulez-vous ?'
                                  ' {} rondes possibles \n'.format(str(len(players)-1))))
+            if nb_round > len(players)-1 or nb_round < 0:
+                raise ValueError
             break
         except:
             print("That's not a valid option!")
@@ -606,24 +609,24 @@ def tournaments_informations():
     tournois.start_tournament()
 
 
-def remove_tournament(tourn_menu,items):
+def remove_tournament():
     '''Supprime un tournois de la base de donnée avec un affichage'''
+    global tournaments
     names = []
     for tournament in tournaments:
         names.append(tournament.name)
     menu = SelectionMenu(names, 'Quel tournois à supprimer ?')
     menu.show()
-    menu.join()
     selection = menu.selected_option
     db = TinyDB('db.json')
     table = db.table('tournaments')
     try:
         table.remove(where('name') == names[selection])
         tournaments.pop(selection)
-        tourn_menu.remove_item(items[selection])
     except IndexError:
         pass
-    tourn_menu.show()
+    tournament_console()
+
 
 def del_tournament(tournament):
     '''Supprime un tournois de la base de donnée sans affichage'''
@@ -634,18 +637,21 @@ def del_tournament(tournament):
         if tournaments[i].name == tournament.name:
             tournaments.pop(i)
 
+
 def resume_tournament():
     names = []
     selections = []
+    global tournaments
+    tournaments = []
+    load_tournament()
     for tournament in tournaments:
         for ronde in tournament.rondes_instances:
-            if len(ronde.results) != len(tournament.players) or tournament.turn != tournament.round:
+            if tournament.turn != tournament.round+1:
                 names.append(tournament.name)
                 selections.append(tournament)
                 break
     menu = SelectionMenu(names, 'Quel tournois continuer ?')
     menu.show()
-    menu.join()
     selection = menu.selected_option
     try:
         dash = 50*'-'
@@ -657,11 +663,11 @@ def resume_tournament():
                     if player.name == name:
                         player.score += score
         for round in to_continue.rondes_instances:
-            if len(round.results) != len(to_continue.players) or len(round.results) == 0:
+            if len(round.results) != len(to_continue.players) or (len(round.results) == 0 and round.round_name != None):
                 print('Reprise au round : {}'.format(round.round_name))
                 for match in round.match_list:
                     print(dash)
-                    print('{:^13}{:^13}{:^13}'.format(match.player1.name,"soppose à",match.player2.name))
+                    print('{:^13}{:^13}{:^13}'.format(match.player1.name,"s'oppose à",match.player2.name))
                 print(dash,'\n')
                 exit_yor = round.end()
                 to_continue.turn += 1
@@ -671,9 +677,8 @@ def resume_tournament():
                     exit()
                 else:
                     to_continue.start_tournament()
-            elif len(to_continue.rondes_instances) != (to_continue.round - 1) and to_continue.turn != to_continue.round:
+            elif len(to_continue.rondes_instances) != to_continue.round:
                 to_continue.start_tournament()
-
     except IndexError:
         pass
 
