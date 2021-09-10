@@ -672,11 +672,10 @@ def resume_tournament():
     tournaments = []
     load_tournament()
     for tournament in tournaments:
-        for ronde in tournament.rondes_instances:
-            if tournament.turn != tournament.round+1:
-                names.append(tournament.name)
-                selections.append(tournament)
-                break
+        if tournament.turn != tournament.round:
+            names.append(tournament.name)
+            selections.append(tournament)
+            break
     menu = SelectionMenu(names, 'Quel tournois continuer ?')
     menu.show()
     selection = menu.selected_option
