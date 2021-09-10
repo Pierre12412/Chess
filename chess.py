@@ -129,7 +129,14 @@ class Tournament:
 
         # Si c'est la première ronde, on divise en deux groupes, on apparie
         if self.turn == 1:
-            round0 = Round(round_name=str(input("Nom de la Ronde 1 : ")),match_list=[],results=[])
+            while True:
+                name = str(input("Nom de la Ronde 1 : "))
+                if name != 'exit':  
+                    round0 = Round(round_name=name,match_list=[],results=[])
+                    break
+                else:
+                    print("Vous ne pouvez pas sortir d'un tournois non créer")
+                    continue
             self.players = sorted(self.players,
                                   key=attrgetter('ranking'),
                                   reverse=True)
@@ -159,8 +166,14 @@ class Tournament:
             print(dash)
 
         else:
-            roundx = Round(str(input("Nom de la {}ème ronde : "
-                                     .format(self.turn))),match_list=[],results=[])
+            name = str(input("Nom de la {}ème ronde : "
+                                     .format(self.turn)))
+            if name != 'exit':  
+                roundx = Round(round_name=name,match_list=[],results=[])
+            else:
+                del_tournament(self)
+                self.save_tournament()
+                exit()
             self.players = sorted(self.players,
                                   key=attrgetter('score', 'ranking'),
                                   reverse=True)
@@ -610,10 +623,15 @@ def resume_tournament():
     menu.join()
     selection = menu.selected_option
     try:
+        dash = 50*'-'
         to_continue = selections[selection]
         for round in to_continue.rondes_instances:
-            if len(round.results) != len(to_continue.players):
+            if len(round.results) != len(to_continue.players) or len(round.results) == 0:
                 print('Reprise au round : {}'.format(round.round_name))
+                for match in round.match_list:
+                    print(dash)
+                    print('{:^13}{:^13}{:^13}'.format(match.player1.name,"soppose à",match.player2.name))
+                print(dash,'\n')
                 exit_yor = round.end()
                 to_continue.turn += 1
                 del_tournament(to_continue)
@@ -622,6 +640,9 @@ def resume_tournament():
                     exit()
                 else:
                     to_continue.start_tournament()
+            elif len(to_continue.rondes_instances) != (to_continue.round - 1) and to_continue.turn != to_continue.round and round == to_continue.rondes_instances[-1]:
+                to_continue.start_tournament()
+
     except IndexError:
         pass
 
