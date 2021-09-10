@@ -179,6 +179,8 @@ class Tournament:
             # On apparie les joueurs par score
             actual = 0
             next = 1
+            pb = 1
+            opp = []
             while True:
                 while actual < len(self.players) and actual + 1 < len(self.players):
                     matched = False
@@ -192,12 +194,7 @@ class Tournament:
                             self.opponents.append(
                                 [self.players[actual].name, self.players[next].name]
                                 )
-                            print(dash)
-                            print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
-                                .format(self.players[actual].name,
-                                        self.players[actual].surname,
-                                        self.players[next].name,
-                                        self.players[next].surname))
+                            opp.append([self.players[actual], self.players[next]])
                         else:
                             next += 1
 
@@ -207,11 +204,25 @@ class Tournament:
                     else:
                         actual += 1
                         next = actual + 1
+
+                # Résoud le bug 1-2/3-4/5-6/7x8
                 if len(roundx.match_list) != (len(self.players)/2):
-                    print('Problème')
-                    next = 2
+                    roundx.match_list = []
+                    for couple in opp:
+                        [c1,c2] = couple
+                        self.opponents.remove([c1.name,c2.name])
+                    opp = []
+                    next = pb + 1
                     actual = 0
                     continue
+                for couple in opp:
+                    [player_name1,player_name2] = couple
+                    print(dash)
+                    print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
+                        .format(player_name1.name,
+                                player_name1.surname,
+                                player_name2.name,
+                                player_name2.surname))
                 print(dash)
                 break
             # On ajoute la ronde au tournois
@@ -579,6 +590,13 @@ def tournaments_informations():
         print('Trop peu de gens pour faire un tournois...')
         input()
         console_menu()
+    while True:
+        try:
+            nb_round = int(input('Combien de ronde voulez-vous ?'
+            '{} rondes possibles'.format(players.)))
+            break
+        except:
+            print("That's not a valid option!")
     name = str(input('Nom du tournois\n'))
     place = str(input('Lieu du tournois\n'))
     date = str(input('Date du tournois \n'))
