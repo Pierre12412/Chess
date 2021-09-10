@@ -267,7 +267,7 @@ class Tournament:
 
     def start_tournament(self):
         '''Démarre le tournois et apparie'''
-        while self.turn != self.round:
+        while self.turn != self.round+1 and self.turn != len(players):
             if self.turn == 1:
                 self.switzerland()
                 exit_yorn = self.rondes_instances[0].end()
@@ -592,8 +592,8 @@ def tournaments_informations():
         console_menu()
     while True:
         try:
-            nb_round = int(input('Combien de ronde voulez-vous ?'
-            '{} rondes possibles'.format(players.)))
+            nb_round = int(input('Combien de rondes voulez-vous ?'
+                                 ' {} rondes possibles \n'.format(str(len(players)-1))))
             break
         except:
             print("That's not a valid option!")
@@ -602,7 +602,7 @@ def tournaments_informations():
     date = str(input('Date du tournois \n'))
     cadence = str(input('Cadence du tournois\n'))
     description = str(input('Description du tournois\n'))
-    tournois = Tournament(name, place, date, cadence, description,rondes_instances=[])
+    tournois = Tournament(name, place, date, cadence, description,rondes_instances=[],round=nb_round)
     tournois.start_tournament()
 
 
