@@ -12,12 +12,18 @@ tournaments = []
 
 def show_data(tournament):
     '''Menu de selection et affichage des données'''
+
+    print(tournament.description, '\n'*3)
     a_list = ["Afficher tous les joueurs par ordre alphabétique",
               "- par classement",
               "Afficher tous les tours",
               "Afficher tous les matchs"]
 
-    menu = SelectionMenu(a_list, 'Tournois : {}'.format(tournament.name))
+    menu = SelectionMenu(a_list, 'Le tournois à eu lieu à {} le '
+                                 '{} en cadence {}'
+                                 .format(tournament.place,
+                                         tournament.date,
+                                         tournament.cadence))
 
     menu.show()
 
@@ -477,11 +483,27 @@ def save_players(players=players):
 
 def add_player():
     '''Créer un joueur'''
-    name = str(input('Prénom du joueur à ajouter \n'))
-    surname = str(input('Nom du joueur à ajouter\n'))
-    born = str(input('Date de naissance du joueur à ajouter\n'))
-    gender = str(input("Genre du joueur à ajouter ('M' ou 'F')\n"))
-    ranking = str(input("Classement du joueur à ajouter\n"))
+    while True:
+        try:
+            name = str(input('Prénom du joueur à ajouter \n'))
+            if name == '':
+                raise ValueError
+            surname = str(input('Nom du joueur à ajouter\n'))
+            if surname == '':
+                raise ValueError
+            born = str(input('Date de naissance du joueur à ajouter\n'))
+            if born == '':
+                raise ValueError
+            gender = str(input("Genre du joueur à ajouter ('M' ou 'F')\n"))
+            if gender == '':
+                raise ValueError
+            ranking = int(input("Classement du joueur à ajouter\n"))
+            if ranking == '':
+                raise ValueError
+            break
+        except ValueError:
+            print('Information obligatoire ou incorrecte, veuillez réessayer')
+
     new = Player(name=name, surname=surname, born=born,
                  gender=gender, ranking=ranking)
     players.append(new)
@@ -622,14 +644,22 @@ def tournaments_informations():
                                  .format(str(len(players)-1))))
             if nb_round > len(players)-1 or nb_round < 0:
                 raise ValueError
+            name = str(input('Nom du tournois\n'))
+            if name == '':
+                raise ValueError
+            place = str(input('Lieu du tournois\n'))
+            if place == '':
+                raise ValueError
+            date = str(input('Date du tournois \n'))
+            if date == '':
+                raise ValueError
+            cadence = str(input('Cadence du tournois\n'))
+            if cadence == '':
+                raise ValueError
+            description = str(input('Description du tournois\n'))
             break
         except ValueError:
             print("Réponse non valide")
-    name = str(input('Nom du tournois\n'))
-    place = str(input('Lieu du tournois\n'))
-    date = str(input('Date du tournois \n'))
-    cadence = str(input('Cadence du tournois\n'))
-    description = str(input('Description du tournois\n'))
     tournois = Tournament(name, place,
                           date, cadence,
                           description, rondes_instances=[],
@@ -673,7 +703,11 @@ def resume_tournament():
     tournaments = []
     load_tournament()
     for tournament in tournaments:
-        if len(tournament.rondes_instances) != tournament.round: # Si la dernière ronde est pas complète aussi
+        finish = True
+        for round in tournament.rondes_instances:
+            if len(round.results) != len(tournament.players):
+                finish = False
+        if len(tournament.rondes_instances) != tournament.round or not finish:
             names.append(tournament.name)
             selections.append(tournament)
     menu = SelectionMenu(names, 'Quel tournois continuer ?')
