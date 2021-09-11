@@ -5,9 +5,12 @@ from consolemenu.items import FunctionItem
 from consolemenu.selection_menu import SelectionMenu
 from tinydb import TinyDB, where
 
-
+# Ensemble des joueurs (chargés au démarrage)
 players = []
+# Ensemble des tournois (chargés au démarrage)
 tournaments = []
+
+# Vues
 
 
 def show_data(tournament):
@@ -69,6 +72,16 @@ def show_data(tournament):
     input()
 
 
+def show_players():
+    dash = '-'*30
+    space = '\n'*3
+    print(space, dash)
+    for player in players:
+        print('{:^10}{:^10}'.format(player.name, player.surname))
+        print(dash)
+    input('Appuyez sur entrée pour revenir au menu principal')
+
+
 def console_menu():
     '''Menu Principal'''
     menu = ConsoleMenu("Menu de selection", "Choisissez une option")
@@ -106,7 +119,24 @@ def tournament_console():
     tournaments_menu.show()
 
 
+# Modèles
+
+
 class Tournament:
+    '''
+    Classe des tournois
+    -name : Nom
+    -place : Lieu
+    -date : Date
+    -cadence : "Blitz" par exemple
+    -round : Nombre de rondes
+    -rondes_instances : Liste des instances de rondes
+    -players : Liste des joueurs qui participent
+    -description : Description du tournois
+    -turn : Ronde actuelle
+    -opponents : Liste de couple [joueur1,joueur2] qui se sont
+                 déjà rencontrés
+    '''
     def __init__(self, name, place, date, cadence, description,
                  round=5, rondes_instances=[], players=players, turn=1,
                  opponents=[]):
@@ -123,7 +153,7 @@ class Tournament:
         self.opponents = opponents
 
     def conditions_duo(self, player1, player2, round):
-        '''Conditions pour que 2 joueurs soient appariés'''
+        '''Conditions à remplir pour que 2 joueurs soient appariés'''
         for match in round.match_list:
             if (match.player1.name == player1.name
                     or match.player2.name == player2.name):
@@ -136,10 +166,9 @@ class Tournament:
         return not (in_opp or in_opp2)
 
     def switzerland(self):
-        dash = 60*'-'
-
         '''Met en place le système d'appariement Suisse'''
 
+        dash = 60*'-'
         # Si c'est la première ronde, on divise en deux groupes, on apparie
         if self.turn == 1:
             while True:
@@ -174,11 +203,14 @@ class Tournament:
 
                 # On ajoute les matchs a la ronde 1
                 round0.match_list.append(match)
+
             # On ajoute la ronde au tournois
             self.rondes_instances.append(round0)
             print(dash)
 
         else:
+            # Si ce n'est pas la première ronde,
+            # on trie et on apparie
             name = str(input("Nom de la {}ème ronde : "
                              .format(self.turn)))
             if name != 'exit':
@@ -210,6 +242,7 @@ class Tournament:
 
                             # On ajoute les matchs a la ronde x
                             roundx.match_list.append(match)
+                            # On ajoute les adversaires à la liste
                             self.opponents.append(
                                 [self.players[actual].name,
                                  self.players[next].name]
@@ -227,6 +260,8 @@ class Tournament:
                         next = actual + 1
 
                 # Résoud le bug 1-2/3-4/5-6/7x8
+                # Annule les infos du round et recommence
+                # différement
                 if len(roundx.match_list) != (len(self.players)/2):
                     roundx.match_list = []
                     for couple in opp:
@@ -247,6 +282,7 @@ class Tournament:
                                   player_name2.surname))
                 print(dash)
                 break
+
             # On ajoute la ronde au tournois
             self.rondes_instances.append(roundx)
 
@@ -254,7 +290,7 @@ class Tournament:
         '''Affiche proprement en tableau les résultats
         des rondes passées du tournois
 
-        Prend la liste des joueurs et celle des instances de rondes'''
+        Utilise la liste des joueurs et celle des instances de rondes'''
 
         dash = '-' * (11 * (len(self.rondes_instances)+1) + 15)
 
@@ -393,6 +429,14 @@ class Tournament:
 
 
 class Round:
+    '''
+    Classe Round:
+    -match_list : La liste des matchs de la ronde
+    -time_start : L'heure de début
+    -time_end : L'heure de fin
+    -results : Une lise de [Joueur,Score] des résultats des matchs
+    -round_name : Nom de la ronde
+    '''
     def __init__(self, round_name, results=[], match_list=[]):
         self.match_list = match_list
         self.time_start = time.strftime('%H:%M')
@@ -421,6 +465,11 @@ class Round:
 
 
 class Match:
+    '''
+    Classe Match:
+    -player1 : Joueur 1
+    -player2 : Joueur 2
+    '''
     def __init__(self, player1, player2):
         self.score1 = player1.score
         self.score2 = player2.score
@@ -455,6 +504,7 @@ class Match:
 
 
 class Player:
+    '''Classe Joueur explicite'''
     def __init__(self, name, surname, born, gender, ranking, score=0):
         self.name = name
         self.surname = surname
@@ -464,8 +514,12 @@ class Player:
         self.score = score
 
 
-def save_players(players=players):
+# Contrôleurs
+
+def save_players():
     '''Sauvegarde les joueurs de la liste "players"'''
+
+    global players
     db = TinyDB('db.json')
     players_table = db.table('players')
     players_table.truncate()
@@ -483,6 +537,7 @@ def save_players(players=players):
 
 def add_player():
     '''Créer un joueur'''
+
     while True:
         try:
             name = str(input('Prénom du joueur à ajouter \n'))
@@ -510,19 +565,10 @@ def add_player():
     save_players()
 
 
-def show_players():
-    dash = '-'*30
-    space = '\n'*3
-    print(space, dash)
-    for player in players:
-        print('{:^10}{:^10}'.format(player.name, player.surname))
-        print(dash)
-    input('Appuyez sur entrée pour revenir au menu principal')
-
-
 def del_player():
     '''Supprime un joueur si il n'est pas lié
     à un tournois en base de donnée'''
+
     can_delete = True
     while True:
         db = TinyDB('db.json')
@@ -558,6 +604,7 @@ def del_player():
 def load_players():
     '''Charge tout les joueurs vers la liste "players"
     depuis la base de donnée'''
+
     db = TinyDB('db.json')
     players_table = db.table('players')
     serialized_players = players_table.all()
@@ -574,6 +621,7 @@ def load_players():
 def load_tournament():
     '''Charge les tournois vers la liste tournaments
     depuis la base de donnée'''
+
     db = TinyDB('db.json')
     tournaments_table = db.table('tournaments')
     players_no_ser = []
@@ -630,45 +678,9 @@ def load_tournament():
                                       turn, opponents))
 
 
-def tournaments_informations():
-    '''Demande les informations relatives au tournois'''
-    if len(players) < 4:
-        print('Trop peu de gens pour faire un tournois...')
-        input()
-        console_menu()
-    print('Vous pouvez quitter à tout moment en tappant exit \n')
-    while True:
-        try:
-            nb_round = int(input('Combien de rondes voulez-vous ?'
-                                 ' {} rondes possibles \n'
-                                 .format(str(len(players)-1))))
-            if nb_round > len(players)-1 or nb_round < 0:
-                raise ValueError
-            name = str(input('Nom du tournois\n'))
-            if name == '':
-                raise ValueError
-            place = str(input('Lieu du tournois\n'))
-            if place == '':
-                raise ValueError
-            date = str(input('Date du tournois \n'))
-            if date == '':
-                raise ValueError
-            cadence = str(input('Cadence du tournois\n'))
-            if cadence == '':
-                raise ValueError
-            description = str(input('Description du tournois\n'))
-            break
-        except ValueError:
-            print("Réponse non valide")
-    tournois = Tournament(name, place,
-                          date, cadence,
-                          description, rondes_instances=[],
-                          round=nb_round)
-    tournois.start_tournament()
-
-
 def remove_tournament():
-    '''Supprime un tournois de la base de donnée avec un affichage'''
+    '''Supprime un tournois de la base de donnée avec un affichage console'''
+
     global tournaments
     names = []
     for tournament in tournaments:
@@ -687,7 +699,8 @@ def remove_tournament():
 
 
 def del_tournament(tournament):
-    '''Supprime un tournois de la base de donnée sans affichage'''
+    '''Supprime un tournois de la base de donnée sans affichage console'''
+
     db = TinyDB('db.json')
     table = db.table('tournaments')
     table.remove(where('name') == tournament.name)
@@ -697,6 +710,8 @@ def del_tournament(tournament):
 
 
 def resume_tournament():
+    '''Permet de reprendre un tournois'''
+
     names = []
     selections = []
     global tournaments
@@ -752,7 +767,47 @@ def resume_tournament():
         pass
 
 
+def tournaments_informations():
+    '''Créer un tournois'''
+
+    if len(players) < 4:
+        print('Trop peu de gens pour faire un tournois...')
+        input()
+        console_menu()
+    print('Vous pouvez quitter à tout moment en tappant exit \n')
+    while True:
+        try:
+            nb_round = int(input('Combien de rondes voulez-vous ?'
+                                 ' {} rondes possibles \n'
+                                 .format(str(len(players)-1))))
+            if nb_round > len(players)-1 or nb_round < 0:
+                raise ValueError
+            name = str(input('Nom du tournois\n'))
+            if name == '':
+                raise ValueError
+            place = str(input('Lieu du tournois\n'))
+            if place == '':
+                raise ValueError
+            date = str(input('Date du tournois \n'))
+            if date == '':
+                raise ValueError
+            cadence = str(input('Cadence du tournois\n'))
+            if cadence == '':
+                raise ValueError
+            description = str(input('Description du tournois\n'))
+            break
+        except ValueError:
+            print("Réponse non valide")
+    tournois = Tournament(name, place,
+                          date, cadence,
+                          description, rondes_instances=[],
+                          round=nb_round)
+    tournois.start_tournament()
+
+
 def start():
+    '''Démarre le programme'''
+
     load_players()
     load_tournament()
     console_menu()
