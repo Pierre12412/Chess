@@ -59,6 +59,7 @@ def show_data(tournament):
                 print(dash)
     else:
         menu.exit()
+        tournament_console()
     input()
 
 
@@ -96,7 +97,7 @@ def tournament_console():
     tournaments_menu.append_item(FunctionItem('Supprimer un tournois',
                                               remove_tournament,
                                               should_exit=True))
-    return tournaments_menu.show()
+    tournaments_menu.show()
 
 
 class Tournament:
@@ -672,11 +673,11 @@ def resume_tournament():
     tournaments = []
     load_tournament()
     for tournament in tournaments:
-        if tournament.turn != tournament.round:
+        if len(tournament.rondes_instances) != tournament.round: # Si la dernière ronde est pas complète aussi
             names.append(tournament.name)
             selections.append(tournament)
-            break
     menu = SelectionMenu(names, 'Quel tournois continuer ?')
+    menu.should_exit = True
     menu.show()
     selection = menu.selected_option
     try:
@@ -700,15 +701,18 @@ def resume_tournament():
                                                     match.player2.name))
                 print(dash, '\n')
                 exit_yor = round.end()
-                to_continue.turn += 1
                 del_tournament(to_continue)
                 to_continue.save_tournament()
                 if exit_yor == 'exit':
                     exit()
                 else:
+                    to_continue.turn += 1
                     to_continue.start_tournament()
-            elif len(to_continue.rondes_instances) != to_continue.round:
-                to_continue.start_tournament()
+            elif len(to_continue.rondes_instances) != to_continue.round and round == to_continue.rondes_instances[-1]:
+                if len(round.results) < len(to_continue.players):
+                    round.end()
+                else:
+                    to_continue.start_tournament()
     except IndexError:
         pass
 
