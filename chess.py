@@ -742,7 +742,8 @@ def resume_tournament():
                 else:
                     to_continue.turn += 1
                     to_continue.start_tournament()
-            elif len(to_continue.rondes_instances) != to_continue.round and round == to_continue.rondes_instances[-1]:
+            elif (len(to_continue.rondes_instances) != to_continue.round
+                  and round == to_continue.rondes_instances[-1]):
                 if len(round.results) < len(to_continue.players):
                     round.end()
                 else:
