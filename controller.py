@@ -208,7 +208,7 @@ def resume_tournament():
         to_continue = selections[selection]
         for round in to_continue.rondes_instances:
             for result in round.results:
-                [name, score] = result
+                [name, surname, score] = result
                 for player in to_continue.players:
                     if player.name == name:
                         player.score += score
@@ -245,15 +245,16 @@ def start_tournament(tournament):
     '''Démarre le tournois et apparie'''
     while (tournament.turn != tournament.round+1 and
            tournament.turn != len(tournament.players)):
-        if tournament.turn == 1:
-            tournament.switzerland()
+        exit_yorn2 = tournament.switzerland()
+        exit_yorn = None
+        if tournament.turn == 1 and exit_yorn2 != 'exit':
             exit_yorn = tournament.rondes_instances[0].end()
         else:
-            tournament.switzerland()
-            exit_yorn = tournament.rondes_instances[tournament.turn-1].end()
-        if exit_yorn == 'exit':
+            if exit_yorn2 != 'exit':
+                exit_yorn = tournament.rondes_instances[tournament.turn-1].end()
+        if exit_yorn == 'exit' or exit_yorn2 == 'exit':
             del_tournament(tournament)
-            tournament.save_tournament()
+            tournament.save_tournament(db=TinyDB('db.json'))
             exit()
 
             # Nombre d'appariements max pour un nombre de personne
@@ -279,7 +280,7 @@ def end_tournament(tournament):
     rounds_score(tournament)
     tournament_score(tournament)
     del_tournament(tournament)
-    tournament.save_tournament()
+    tournament.save_tournament(db=TinyDB('db.json'))
     for player in tournament.players:
         player.score = 0
     console_menu(tournaments_informations, add_player,

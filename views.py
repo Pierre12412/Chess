@@ -57,6 +57,7 @@ def console_menu(tournaments_informations, add_player,
     menu.append_item(function_item4)
     menu.append_item(function_item5)
     menu.append_item(submenu_reports)
+    menu.should_exit = True
     menu.show()
 
 
@@ -94,15 +95,27 @@ def selection_menu_report(tournament):
     menu.show()
     menu.join()
     selection = menu.selected_option
-    dash = 20 * '-'
+    dash = 100 * '-'
     if selection == 0:
         list_name = []
         for player in tournament.players:
             list_name.append(player.name)
         list_name.sort()
+        print('{:^10}{:^20}{:^20}{:^10}{:^10}'
+              .format('Prénom', 'Nom', 'Naissance',
+                      'Genre', 'Classement'))
+        print(dash)
         for name in list_name:
-            print(name)
-            print(dash)
+            for player in tournament.players:
+                if player.name == name:
+                    print('{:^10}{:^20}{:^20}{:^10}{:^10}'
+                          .format(player.name,
+                                  player.surname,
+                                  player.born,
+                                  player.gender,
+                                  player.ranking))
+                    print(dash)
+        input()
     elif selection == 1:
         classement_sort = tournament.players
         classement_sort = sorted(classement_sort,
@@ -120,13 +133,15 @@ def selection_menu_report(tournament):
                           player.gender,
                           player.ranking))
             print(dash)
+        input()
     elif selection == 2:
         for round in tournament.rondes_instances:
             print(round.round_name)
             print(dash)
             for result in round.results:
-                print('{:^10}{:^10}'.format(result[0], result[1]))
+                print('{:^10}{:^10}'.format(result[0], result[2]))
             print(dash)
+        input()
     elif selection == 3:
         for round in tournament.rondes_instances:
             print(round.round_name)
@@ -136,6 +151,7 @@ def selection_menu_report(tournament):
                      match.player1.name, match.player2.name)
                      )
                 print(dash)
+        input()
     else:
         menu.exit()
         ask_console_tournament()

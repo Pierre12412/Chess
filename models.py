@@ -96,8 +96,7 @@ class Tournament:
             if name != 'exit':
                 roundx = Round(round_name=name, match_list=[], results=[])
             else:
-                self.save_tournament()
-                exit()
+                return 'exit'
             self.players = sorted(self.players,
                                   key=attrgetter('score', 'ranking'),
                                   reverse=True)
@@ -143,6 +142,7 @@ class Tournament:
                 # différement
                 if len(roundx.match_list) != (len(self.players)/2):
                     roundx.match_list = []
+
                     for couple in opp:
                         [c1, c2] = couple
                         self.opponents.remove([c1.name, c2.name])
