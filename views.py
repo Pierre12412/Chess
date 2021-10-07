@@ -5,6 +5,8 @@ from operator import attrgetter
 
 
 def ask_tournament(players):
+    '''Demande les informations nécessaires pour débuter un tournois'''
+
     print('Vous pouvez quitter à tout moment en tappant exit \n')
     while True:
         try:
@@ -32,14 +34,17 @@ def ask_tournament(players):
     return (date, place, name, cadence, description, nb_round)
 
 
-def console_menu(tournaments_informations, add_player, show_players,
-                 del_player, resume_tournament, show_console_tournament):
+def console_menu(tournaments_informations, add_player,
+                 del_player, resume_tournament, show_console_tournament,
+                 players):
     '''Menu Principal'''
+
     menu = ConsoleMenu("Menu de selection", "Choisissez une option")
     function_item1 = FunctionItem('Démarrer un tournois',
                                   tournaments_informations, should_exit=True)
     function_item3 = FunctionItem('Ajouter un joueur', add_player)
-    function_item5 = FunctionItem('Liste des joueurs', show_players)
+    function_item5 = FunctionItem('Liste des joueurs',
+                                  show_players, args=[players])
     function_item4 = FunctionItem('Supprimer un joueur', del_player)
 
     submenu_reports = FunctionItem('Rapports', show_console_tournament)
@@ -62,11 +67,12 @@ def ask_selection_resume(names):
     return menu.selected_option
 
 
-def ask_console_tournament(tournaments, show_data, remove_tournament):
+def ask_console_tournament(tournaments, selection_menu_report,
+                           remove_tournament):
     tournaments_menu = ConsoleMenu('Tournois')
     for tournament in tournaments:
         name = tournament.name
-        item = FunctionItem(name, show_data, args=[tournament])
+        item = FunctionItem(name, selection_menu_report, args=[tournament])
         tournaments_menu.append_item(item)
     tournaments_menu.append_item(FunctionItem('Supprimer un tournois',
                                               remove_tournament,
@@ -85,12 +91,70 @@ def selection_menu_report(tournament):
                                  .format(tournament.place,
                                          tournament.date,
                                          tournament.cadence))
-
     menu.show()
-
     menu.join()
+    selection = menu.selected_option
+    dash = 20 * '-'
+    if selection == 0:
+        list_name = []
+        for player in tournament.players:
+            list_name.append(player.name)
+        list_name.sort()
+        for name in list_name:
+            print(name)
+            print(dash)
+    elif selection == 1:
+        classement_sort = tournament.players
+        classement_sort = sorted(classement_sort,
+                                 key=attrgetter('ranking'),
+                                 reverse=True)
+        print('{:^10}{:^20}{:^20}{:^10}{:^20}'
+              .format('Prénom', 'Nom', 'Naissance',
+                      'Genre', 'Classement'))
+        print(dash)
+        for player in classement_sort:
+            print('{:^10}{:^20}{:^20}{:^10}{:^20}'
+                  .format(player.name,
+                          player.surname,
+                          player.born,
+                          player.gender,
+                          player.ranking))
+            print(dash)
+    elif selection == 2:
+        for round in tournament.rondes_instances:
+            print(round.round_name)
+            print(dash)
+            for result in round.results:
+                print('{:^10}{:^10}'.format(result[0], result[1]))
+            print(dash)
+    elif selection == 3:
+        for round in tournament.rondes_instances:
+            print(round.round_name)
+            print(dash)
+            for match in round.match_list:
+                print("{} s'opposait à {}".format(
+                     match.player1.name, match.player2.name)
+                     )
+                print(dash)
+    else:
+        menu.exit()
+        ask_console_tournament()
 
-    return (menu.selected_option, menu)
+
+def show_players(players):
+    dash = '-'*100
+    print(dash)
+    print('{:^10}{:^20}{:^20}{:^10}{:^20}'.format('Prénom', 'Nom', 'Naissance',
+                                                  'Genre', 'Classement'))
+    print(dash)
+    for player in players:
+        print('{:^10}{:^20}{:^20}{:^10}{:^20}'.format(player.name,
+                                                      player.surname,
+                                                      player.born,
+                                                      player.gender,
+                                                      player.ranking))
+        print(dash)
+    input('Appuyez sur entrée pour revenir au menu principal')
 
 
 def delete_player_console(names):
@@ -136,14 +200,14 @@ def rounds_score(tournament):
 
     Utilise la liste des joueurs et celle des instances de rondes'''
 
-    dash = '-' * (11 * (len(tournament.rondes_instances)+1) + 15)
+    dash = '-' * (11 * (len(tournament.rondes_instances)+1) + 30)
 
     tournament.players = sorted(tournament.players,
                                 key=attrgetter('score', 'ranking'),
                                 reverse=True)
 
     # Première ligne, on affiche l'en-tête : le nom de(s) ronde(s) et Total
-    print('{:>10s}'.format(' '), end=' |')
+    print('{:>23s}'.format(' '), end=' |')
     for round in tournament.rondes_instances:
         print('{:^11s}'.format(round.round_name), end='|')
     print('{:^11s}'.format('Total'), end='|')
@@ -154,16 +218,20 @@ def rounds_score(tournament):
         round_index = 0
         for round in tournament.rondes_instances:
             for name_score in round.results:
-                if player.name == name_score[0] and round_index == 0:
-                    print('{:<10s}{:>3s}{:^9s}'
+                if (player.name == name_score[0]
+                        and player.surname == name_score[1]
+                        and round_index == 0):
+                    print('{:<10s}{:>3s}{:<10s}{:>3s}{:^9s}'
                           .format(
-                           name_score[0], ' | ', str(name_score[1])),
+                           name_score[0], ' | ', name_score[1], ' | ',
+                           str(name_score[2])),
                           end=' | ')
                     round_index += 1
                 else:
-                    if player.name == name_score[0]:
+                    if (player.name == name_score[0]
+                            and player.surname == name_score[1]):
                         print('{:^9s}'
-                              .format(str(name_score[1])), end=' | ')
+                              .format(str(name_score[2])), end=' | ')
         print('{:^9s}'.format(str(player.score)), end=' | ')
         print('\n', dash)
 

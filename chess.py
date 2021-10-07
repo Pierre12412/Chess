@@ -12,69 +12,14 @@ players = []
 # Ensemble des tournois (chargés au démarrage)
 tournaments = []
 
-# Vues
-
-
-def show_data(tournament):
-    '''Menu de selection et affichage des données'''
-    (selection, menu) = selection_menu_report(tournament)
-    dash = 20 * '-'
-    if selection == 0:
-        list_name = []
-        for player in tournament.players:
-            list_name.append(player.name)
-        list_name.sort()
-        for name in list_name:
-            print(name)
-            print(dash)
-    elif selection == 1:
-        classement_sort = tournament.players
-        classement_sort = sorted(classement_sort,
-                                 key=attrgetter('ranking'),
-                                 reverse=True)
-        for player in classement_sort:
-            print('{:^10}{:^10}'.format(player.name, player.ranking))
-            print(dash)
-    elif selection == 2:
-        for round in tournament.rondes_instances:
-            print(round.round_name)
-            print(dash)
-            for result in round.results:
-                print('{:^10}{:^10}'.format(result[0], result[1]))
-            print(dash)
-    elif selection == 3:
-        for round in tournament.rondes_instances:
-            print(round.round_name)
-            print(dash)
-            for match in round.match_list:
-                print("{} s'opposait à {}".format(
-                     match.player1.name, match.player2.name)
-                     )
-                print(dash)
-    else:
-        menu.exit()
-        show_console_tournaments()
-    input()
-
-
-def show_players():
-    dash = '-'*30
-    space = '\n'*3
-    print(space, dash)
-    for player in players:
-        print('{:^10}{:^10}'.format(player.name, player.surname))
-        print(dash)
-    input('Appuyez sur entrée pour revenir au menu principal')
-
 
 def show_console_tournaments():
     global tournaments
     tournaments = []
     load_tournament()
-    ask_console_tournament(tournaments, show_data, remove_tournament)
+    ask_console_tournament(tournaments, selection_menu_report,
+                           remove_tournament)
 
-
-# Contrôleurs
 
 def save_players():
     '''Sauvegarde les joueurs de la liste "players"'''
@@ -321,7 +266,7 @@ def start_tournament(tournament):
         tournament.turn += 1
         # On affiche le tableau des scores
         rounds_score(tournament)
-        end_tournament(tournament)
+    end_tournament(tournament)
 
 
 def end_tournament(tournament):
@@ -337,19 +282,20 @@ def end_tournament(tournament):
     tournament.save_tournament()
     for player in tournament.players:
         player.score = 0
-    console_menu(tournaments_informations, add_player, show_players,
-                 del_player, resume_tournament, show_console_tournaments)
+    console_menu(tournaments_informations, add_player,
+                 del_player, resume_tournament, show_console_tournaments,
+                 players)
 
 
 def tournaments_informations():
     '''Créer un tournois'''
-    if len(players) < 4:
+    if len(players) < 8:
         print('Trop peu de gens pour faire un tournois...')
         input()
-        console_menu(tournaments_informations, add_player, show_players,
+        console_menu(tournaments_informations, add_player,
                      del_player, resume_tournament,
-                     show_console_tournaments)
-    infos = ask_tournament()
+                     show_console_tournaments, players)
+    infos = ask_tournament(players)
     (date, place, name, cadence, description, nb_round) = infos
     tournois = Tournament(name, place,
                           date, cadence,
@@ -362,9 +308,9 @@ def start():
     '''Démarre le programme'''
     load_players()
     load_tournament()
-    console_menu(tournaments_informations, add_player, show_players,
+    console_menu(tournaments_informations, add_player,
                  del_player, resume_tournament,
-                 show_console_tournaments)
+                 show_console_tournaments, players)
 
 
 start()
