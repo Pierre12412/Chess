@@ -136,7 +136,7 @@ def selection_menu_report(tournament):
         input()
     elif selection == 2:
         for round in tournament.rondes_instances:
-            print(round.round_name)
+            print(round.round_name + '| {} | | {} |'.format(round.time_start, round.time_end))
             print(dash)
             for result in round.results:
                 print('{:^10}{:^10}'.format(result[0], result[2]))

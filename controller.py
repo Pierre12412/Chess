@@ -301,7 +301,8 @@ def tournaments_informations():
     tournois = Tournament(name, place,
                           date, cadence,
                           description, rondes_instances=[],
-                          round=nb_round, players=players)
+                          round=nb_round, players=players,
+                          opponents=[])
     start_tournament(tournois)
 
 

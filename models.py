@@ -104,7 +104,7 @@ class Tournament:
             # On apparie les joueurs par score
             actual = 0
             next = 1
-            pb = 1
+            pb = 0
             opp = []
             while True:
                 while (actual < len(self.players)
@@ -130,19 +130,27 @@ class Tournament:
                         else:
                             next += 1
 
-                    if next == actual + 1:
+                    if actual == 0:
+                        pb = 0
+                        pb += next
+                        if next == 1:
+                            actual += 2
+                        else:
+                            actual += 1
+                    elif next == actual + 1:
                         actual += 2
-                        next = actual + 1
                     else:
                         actual += 1
-                        next = actual + 1
+                    next = actual + 1
 
                 # Résoud le bug 1-2/3-4/5-6/7x8
                 # Annule les infos du round et recommence
                 # différement
                 if len(roundx.match_list) != (len(self.players)/2):
+                    for match in roundx.match_list:
+                        print(match.player1.name, ' ', match.player2.name)
+                        print(dash)
                     roundx.match_list = []
-
                     for couple in opp:
                         [c1, c2] = couple
                         self.opponents.remove([c1.name, c2.name])
