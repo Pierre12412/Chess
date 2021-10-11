@@ -1,5 +1,5 @@
 import time
-from operator import attrgetter
+from operator import attrgetter, index
 
 
 class Tournament:
@@ -45,13 +45,8 @@ class Tournament:
         in_opp2 = [player2.name, player1.name] in self.opponents
         return not (in_opp or in_opp2)
 
-    def switzerland(self):
-        '''Met en place le système d'appariement Suisse'''
-
-        dash = 60*'-'
-        # Si c'est la première ronde, on divise en deux groupes, on apparie
-        if self.turn == 1:
-            while True:
+    def start_first_round(self):
+        while True:
                 name = str(input("Nom de la Ronde 1 : "))
                 if name != 'exit':
                     round0 = Round(round_name=name, match_list=[], results=[])
@@ -59,119 +54,111 @@ class Tournament:
                 else:
                     print("Vous ne pouvez pas sortir d'un tournois non créer")
                     continue
-            self.players = sorted(self.players,
-                                  key=attrgetter('ranking'),
-                                  reverse=True)
-            first_part = []
-            second_part = []
+        self.players = sorted(self.players,
+                                key=attrgetter('ranking'),
+                                reverse=True)
+        first_part = []
+        second_part = []
 
-            for i in range(len(self.players)):
-                if i+1 <= len(self.players)/2:
-                    first_part.append(self.players[i])
-                else:
-                    second_part.append(self.players[i])
-
-            for i in range(len(first_part)):
-                match = Match(first_part[i], second_part[i])
-                self.opponents.append(
-                    [first_part[i].name, second_part[i].name]
-                    )
-                print(dash)
-                print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
-                      .format(first_part[i].name, first_part[i].surname,
-                              second_part[i].name, second_part[i].surname))
-
-                # On ajoute les matchs a la ronde 1
-                round0.match_list.append(match)
-
-            # On ajoute la ronde au tournois
-            self.rondes_instances.append(round0)
-            print(dash)
-
-        else:
-            # Si ce n'est pas la première ronde,
-            # on trie et on apparie
-            name = str(input("Nom de la {}ème ronde : "
-                             .format(self.turn)))
-            if name != 'exit':
-                roundx = Round(round_name=name, match_list=[], results=[])
+        for i in range(len(self.players)):
+            if i+1 <= len(self.players)/2:
+                first_part.append(self.players[i])
             else:
-                return 'exit'
-            self.players = sorted(self.players,
-                                  key=attrgetter('score', 'ranking'),
-                                  reverse=True)
+                second_part.append(self.players[i])
 
-            # On apparie les joueurs par score
-            actual = 0
-            next = 1
-            pb = 0
-            opp = []
-            while True:
-                while (actual < len(self.players)
-                        and actual + 1 < len(self.players)):
-                    matched = False
-                    while matched is False and (next < len(self.players)):
-                        if self.conditions_duo(self.players[actual],
-                                               self.players[next],
-                                               roundx):
-                            matched = True
-                            match = Match(self.players[actual],
-                                          self.players[next])
+        for i in range(len(first_part)):
+            match = Match(first_part[i], second_part[i])
+            self.opponents.append(
+                [first_part[i].name, second_part[i].name]
+                )
+            # On ajoute les matchs a la ronde 1
+            round0.match_list.append(match)
 
-                            # On ajoute les matchs a la ronde x
-                            roundx.match_list.append(match)
-                            # On ajoute les adversaires à la liste
-                            self.opponents.append(
-                                [self.players[actual].name,
-                                 self.players[next].name]
+        # On ajoute la ronde au tournois
+        self.rondes_instances.append(round0)
+        self.match_array(first_part=first_part,second_part=second_part)
+
+    def start_x_round(self):
+        # Si ce n'est pas la première ronde,
+        # on trie et on apparie
+        name = str(input("Nom de la {}ème ronde : "
+                             .format(self.turn)))
+        if name != 'exit':
+            roundx = Round(round_name=name, match_list=[], results=[])
+        else:
+            return 'exit'
+        self.players = sorted(self.players,
+                                key=attrgetter('score', 'ranking'),
+                                reverse=True)
+        self.one_against_one(roundx)
+
+    def match_array(self, first_part, second_part):
+        dash = 60*'-'
+        for i in range(len(first_part)):
+            print(dash)
+            print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
+                    .format(first_part[i].name, first_part[i].surname,
+                            second_part[i].name, second_part[i].surname))
+        print(dash)
+
+    def pair(self, roundx):
+        '''
+        Appariement Suisse sur les joueurs
+        '''
+        players = []
+        for player in self.players:
+            players.append(player)
+        while len(players) != 0:
+            i = 0
+            first = players[i]
+            ind1 = i
+            second = players[i + 1]
+            ind2 = i + 1
+
+            while ([first.name, second.name] in self.opponents
+                    or [second.name, first.name] in self.opponents):
+                try:
+                    i += 1
+                    second = players[i + 1]
+                    ind2 = i + 1
+
+                except IndexError:
+                    second = players[i]
+                    ind2 = i
+                    break
+
+            match = Match(players[ind1], players[ind2])
+            roundx.match_list.append(match)
+            self.opponents.append(
+                                [players[ind1].name,
+                                 players[ind2].name]
                                 )
-                            opp.append([self.players[actual],
-                                        self.players[next]])
-                        else:
-                            next += 1
+           
+            del players[ind2]
+            del players[ind1]
 
-                    if actual == 0:
-                        pb = 0
-                        pb += next
-                        if next == 1:
-                            actual += 2
-                        else:
-                            actual += 1
-                    elif next == actual + 1:
-                        actual += 2
-                    else:
-                        actual += 1
-                    next = actual + 1
+    def one_against_one(self, roundx):
+        self.pair(roundx)
 
-                # Résoud le bug 1-2/3-4/5-6/7x8
-                # Annule les infos du round et recommence
-                # différement
-                if len(roundx.match_list) != (len(self.players)/2):
-                    for match in roundx.match_list:
-                        print(match.player1.name, ' ', match.player2.name)
-                        print(dash)
-                    roundx.match_list = []
-                    for couple in opp:
-                        [c1, c2] = couple
-                        self.opponents.remove([c1.name, c2.name])
-                    opp = []
-                    next = pb + 1
-                    pb += 1
-                    actual = 0
-                    continue
-                for couple in opp:
-                    [player_name1, player_name2] = couple
-                    print(dash)
-                    print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
-                          .format(player_name1.name,
-                                  player_name1.surname,
-                                  player_name2.name,
-                                  player_name2.surname))
-                print(dash)
-                break
+        first_part = []
+        second_part = []
 
-            # On ajoute la ronde au tournois
-            self.rondes_instances.append(roundx)
+        for match in roundx.match_list:
+            first_part.append(match.player1)
+            second_part.append(match.player2)
+
+        self.match_array(first_part, second_part)
+        # On ajoute la ronde au tournois
+        self.rondes_instances.append(roundx)
+
+    def switzerland(self):
+        '''Met en place le système d'appariement Suisse'''
+        # Si c'est la première ronde, on divise en deux groupes, on apparie
+        if self.turn == 1:
+            self.start_first_round()
+        else:
+            exit = self.start_x_round()
+            return exit
 
     def save_tournament(self, db):
         '''Sauvegarde le tournois actuel'''

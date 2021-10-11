@@ -6,15 +6,11 @@ from operator import attrgetter
 
 def ask_tournament(players):
     '''Demande les informations nécessaires pour débuter un tournois'''
+    print('Tournois de 4 Rondes')
+    print('Vous pouvez quitter à tout moment en tappant exit')
 
-    print('Vous pouvez quitter à tout moment en tappant exit \n')
     while True:
         try:
-            nb_round = int(input('Combien de rondes voulez-vous ?'
-                                 ' {} rondes possibles \n'
-                                 .format(str(len(players)-1))))
-            if nb_round > len(players)-1 or nb_round < 0:
-                raise ValueError
             name = str(input('Nom du tournois\n'))
             if name == '':
                 raise ValueError
@@ -31,7 +27,7 @@ def ask_tournament(players):
             break
         except ValueError:
             print("Réponse non valide")
-    return (date, place, name, cadence, description, nb_round)
+    return (date, place, name, cadence, description, 4)
 
 
 def console_menu(tournaments_informations, add_player,
@@ -136,7 +132,6 @@ def selection_menu_report(tournament):
         input()
     elif selection == 2:
         for round in tournament.rondes_instances:
-            print(round.round_name + '| {} | | {} |'.format(round.time_start, round.time_end))
             print(dash)
             for result in round.results:
                 print('{:^10}{:^10}'.format(result[0], result[2]))
