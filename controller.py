@@ -251,7 +251,8 @@ def start_tournament(tournament):
             exit_yorn = tournament.rondes_instances[0].end()
         else:
             if exit_yorn2 != 'exit':
-                exit_yorn = tournament.rondes_instances[tournament.turn-1].end()
+                exit_yorn = (tournament
+                             .rondes_instances[tournament.turn-1].end())
         if exit_yorn == 'exit' or exit_yorn2 == 'exit':
             del_tournament(tournament)
             tournament.save_tournament(db=TinyDB('db.json'))

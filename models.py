@@ -1,5 +1,5 @@
 import time
-from operator import attrgetter, index
+from operator import attrgetter
 
 
 class Tournament:
@@ -47,16 +47,16 @@ class Tournament:
 
     def start_first_round(self):
         while True:
-                name = str(input("Nom de la Ronde 1 : "))
-                if name != 'exit':
-                    round0 = Round(round_name=name, match_list=[], results=[])
-                    break
-                else:
-                    print("Vous ne pouvez pas sortir d'un tournois non créer")
-                    continue
+            name = str(input("Nom de la Ronde 1 : "))
+            if name != 'exit':
+                round0 = Round(round_name=name, match_list=[], results=[])
+                break
+            else:
+                print("Vous ne pouvez pas sortir d'un tournois non créer")
+                continue
         self.players = sorted(self.players,
-                                key=attrgetter('ranking'),
-                                reverse=True)
+                              key=attrgetter('ranking'),
+                              reverse=True)
         first_part = []
         second_part = []
 
@@ -76,20 +76,20 @@ class Tournament:
 
         # On ajoute la ronde au tournois
         self.rondes_instances.append(round0)
-        self.match_array(first_part=first_part,second_part=second_part)
+        self.match_array(first_part=first_part, second_part=second_part)
 
     def start_x_round(self):
         # Si ce n'est pas la première ronde,
         # on trie et on apparie
         name = str(input("Nom de la {}ème ronde : "
-                             .format(self.turn)))
+                         .format(self.turn)))
         if name != 'exit':
             roundx = Round(round_name=name, match_list=[], results=[])
         else:
             return 'exit'
         self.players = sorted(self.players,
-                                key=attrgetter('score', 'ranking'),
-                                reverse=True)
+                              key=attrgetter('score', 'ranking'),
+                              reverse=True)
         self.one_against_one(roundx)
 
     def match_array(self, first_part, second_part):
@@ -97,8 +97,8 @@ class Tournament:
         for i in range(len(first_part)):
             print(dash)
             print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
-                    .format(first_part[i].name, first_part[i].surname,
-                            second_part[i].name, second_part[i].surname))
+                  .format(first_part[i].name, first_part[i].surname,
+                          second_part[i].name, second_part[i].surname))
         print(dash)
 
     def pair(self, roundx):
@@ -133,7 +133,6 @@ class Tournament:
                                 [players[ind1].name,
                                  players[ind2].name]
                                 )
-           
             del players[ind2]
             del players[ind1]
 
