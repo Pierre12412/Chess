@@ -1,3 +1,7 @@
+Effectuez un rapport flake8-html avec la commande : flake8 --format=html --htmldir=flake-report
+(dans la racine du projet)
+
+Pour visualiser le rapport flake8 : Un fichier 'flake-report' a été créé à la racine du projet, il suffit ensuite de cliquer sur "index"
 
 WINDOWS:
 
@@ -15,9 +19,7 @@ Activez le ensuite avec la commande : virtualenv\Scripts\activate.bat
 
 Puis récupérez les packages Python de requirements.txt avec la commande suivante : pip install -r requirements.txt
 
-Enfin executez le programme en tapant dans la console : chess.py
-
-Ou effectuez un rapport flake8-html avec la commande : flake8 ./chess.py  --format=html --htmldir=flake-report
+Enfin executez le programme en tapant dans la console : controller.py
 
 MAC/LINUX:
 
@@ -35,5 +37,5 @@ Activez le ensuite avec la commande : source ~/virtualenv/bin/activate
 
 Puis récupérez les packages Python de requirements.txt avec la commande suivante : pip install -r requirements.txt
 
-Enfin executez le programme en tapant dans la console : ./chess.py
+Enfin executez le programme en tapant dans la console : ./controller.py
 
