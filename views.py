@@ -31,34 +31,41 @@ def ask_tournament():
 
 
 def ask_players(players):
-    res = []
-    names = []
-    for player in players:
-        names.append(player.name)
-    names.append('Ok')
-    while 'Ok' in names or len(res) < 8:
-        participants = 'Les participants actuellement sont :'
-        if len(res) == 0:
-            participants += ' Personne '
-        else:
-            i = 0
-            for player in res:
-                i += 1
-                if i % 5 == 0 and i != 0:
-                    participants += '\n'
-                participants += ' {},'.format(player.name)
-        menu = SelectionMenu(names, participants)
-        menu.show(show_exit_option=False)
-        menu.join()
-        selection = menu.selected_option
+    while True:
+        res = []
+        names = []
         for player in players:
-            if player.name == names[selection]:
-                res.append(player)
-        if names[selection] == 'Ok' and len(res) < 8:
-            continue
-        names.remove(names[selection])
+            names.append(player.name)
+        names.append('Ok')
+        while 'Ok' in names or len(res) < 8:
+            participants = 'Les participants actuellement sont :'
+            if len(res) == 0:
+                participants += ' Personne '
+            else:
+                i = 0
+                for player in res:
+                    i += 1
+                    if i % 5 == 0 and i != 0:
+                        participants += '\n'
+                    participants += ' {},'.format(player.name)
+            menu = SelectionMenu(names, participants)
+            menu.show(show_exit_option=False)
+            menu.join()
+            selection = menu.selected_option
+            menu.exit()
+            for player in players:
+                if player.name == names[selection]:
+                    res.append(player)
+            if (names[selection] == 'Ok' and len(res) < 8):
+                continue
+            names.remove(names[selection])
         menu.exit()
-    return res
+        if len(res) % 2 == 1:
+            print("Nombre de personne impair, réctifiez !")
+            input()
+            continue
+        else:
+            return res
 
 
 def console_menu(tournaments_informations, add_player,
