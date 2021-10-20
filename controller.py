@@ -1,11 +1,17 @@
 from operator import attrgetter
+import time
 from tinydb import TinyDB, where
 
 from models import Player, Tournament, Match, Round
-from views import (ask_tournament, console_menu, ask_selection_resume,
-                   ask_console_tournament, display_player_tournament_error, resume_round_display, selection_menu_report,
+from views import (ask_tournament, console_menu,
+                   ask_selection_resume,
+                   ask_console_tournament, display_player_tournament_error,
+                   match_array, ask_results, print_time, raise_exit_error,
+                   resume_round_display, selection_menu_report,
                    delete_player_console, informations_player_console,
-                   delete_tournament_console, rounds_score, tournament_error_display, tournament_score)
+                   delete_tournament_console, rounds_score,
+                   tournament_error_display, tournament_score,
+                   ask_name)
 
 # Ensemble des joueurs (chargés au démarrage)
 players = []
@@ -210,9 +216,7 @@ def resume_tournament():
             if (len(round.results) != len(to_continue.players)
                or (len(round.results) == 0 and round.round_name is not None)):
                 resume_round_display(round)
-                exit_yor = round.end()
-                del_tournament(to_continue)
-                to_continue.save_tournament(db=TinyDB('db.json'))
+                exit_yor = end_round(to_continue, round)
                 if exit_yor == 'exit':
                     exit()
                 else:
@@ -221,7 +225,10 @@ def resume_tournament():
             elif (len(to_continue.rondes_instances) != to_continue.round
                   and round == to_continue.rondes_instances[-1]):
                 if len(round.results) < len(to_continue.players):
-                    round.end()
+                    resume_round_display(round)
+                    exit_yor = end_round(to_continue, round)
+                    if exit_yor == 'exit':
+                        exit()
                 else:
                     start_tournament(to_continue)
     except IndexError:
@@ -232,14 +239,14 @@ def start_tournament(tournament):
     '''Démarre le tournois et apparie'''
     while (tournament.turn != tournament.round+1 and
            tournament.turn != len(tournament.players)):
-        exit_yorn2 = tournament.switzerland()
+        exit_yorn2 = switzerland(tournament)
         exit_yorn = None
         if tournament.turn == 1 and exit_yorn2 != 'exit':
-            exit_yorn = tournament.rondes_instances[0].end()
+            exit_yorn = end_round(tournament, tournament.rondes_instances[0])
         else:
             if exit_yorn2 != 'exit':
-                exit_yorn = (tournament
-                             .rondes_instances[tournament.turn-1].end())
+                exit_yorn = (end_round(tournament, tournament
+                             .rondes_instances[tournament.turn-1]))
         if exit_yorn == 'exit' or exit_yorn2 == 'exit':
             del_tournament(tournament)
             tournament.save_tournament(db=TinyDB('db.json'))
@@ -258,13 +265,21 @@ def start_tournament(tournament):
     end_tournament(tournament)
 
 
+def end_round(tournament, round):
+    exit_yor = ask_result(round)
+    round.time_end = time.strftime('%H:%M')
+    print_time('end', round.time_end)
+    del_tournament(tournament)
+    tournament.save_tournament(db=TinyDB('db.json'))
+    return exit_yor
+
+
 def end_tournament(tournament):
     '''Messages et affichage de fin de tournois'''
 
     tournament.players = sorted(tournament.players,
                                 key=attrgetter('score', 'ranking'),
                                 reverse=True)
-    rounds_score(tournament)
     tournament_score(tournament)
     del_tournament(tournament)
     tournament.save_tournament(db=TinyDB('db.json'))
@@ -290,6 +305,52 @@ def tournaments_informations():
                           round=nb_round, players=players,
                           opponents=[])
     start_tournament(tournois)
+
+
+def switzerland(tournament):
+    '''Met en place le système d'appariement Suisse'''
+    # Si c'est la première ronde, on divise en deux groupes, on apparie
+    if tournament.turn == 1:
+        while True:
+            name = ask_name(tournament.turn)
+            if name == 'exit':
+                raise_exit_error()
+                continue
+            break
+        time_start = time.strftime('%H:%M')
+        print_time('start', time_start)
+        fs = tournament.start_first_round(name, time_start)
+        (first_part, second_part) = fs
+        match_array(first_part, second_part)
+    else:
+        name = ask_name(tournament.turn)
+        time_start = time.strftime('%H:%M')
+        exit = tournament.start_x_round(name, time_start)
+        if exit != 'exit':
+            (first_part, second_part) = exit
+            match_array(first_part, second_part)
+        return exit
+
+
+def ask_result(round):
+    for match in round.match_list:
+        already_played = False
+        for result in round.results:
+            [name, surname, score] = result
+            if ((name == match.player1.name and
+                surname == match.player1.surname)
+                or
+                (name == match.player2.name and
+                    match.player2.surname == surname)):
+                already_played = True
+        if not already_played:
+            (result_1, result_2) = ask_results(match)
+            if result_1 == -1:
+                return 'exit'
+            round.results.append([match.player1.name,
+                                  match.player1.surname, result_1])
+            round.results.append([match.player2.name,
+                                  match.player2.surname, result_2])
 
 
 def start():

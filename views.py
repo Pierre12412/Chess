@@ -269,6 +269,7 @@ def rounds_score(tournament):
 
 def tournament_score(tournament):
     print('Fin du tournois, voici le tableau des scores : ')
+    rounds_score(tournament)
     i = 0
     if tournament.players[i].score == tournament.players[i+1].score:
         while (i+1 != len(tournament.players)) and (
@@ -310,8 +311,60 @@ def resume_round_display(round):
                                         "s'oppose à",
                                         match.player2.name))
         print(dash, '\n')
+    input('Appuyez sur une entrée pour rentrer les résultats...\n')
+
+
+def ask_results(match):
+    '''Demande le résultat du match actuel'''
+    while True:
+        result = str(input("Entrez le résultat du match "
+                           "entre {} et {} "
+                           "('1/2', '1-0' ou '0-1') \n"
+                           .format(match.player1.name,
+                                   match.player2.name)))
+        if result == "1/2":
+            match.player1.score += 0.5
+            match.player2.score += 0.5
+            return (0.5, 0.5)
+        elif result == "1-0":
+            match.player1.score += 1
+            return (1, 0)
+        elif result == '0-1':
+            match.player2.score += 1
+            return (0, 1)
+        elif result == 'exit':
+            return(-1, -1)
+        else:
+            print("Ce n'est pas un résultat valide, réessayez")
+            continue
 
 
 def tournament_error_display():
     print('Trop peu de gens pour faire un tournois...')
     input()
+
+
+def ask_name(number_round: int):
+    return str(input("Nom de la Ronde {} : ".format(number_round)))
+
+
+def match_array(first_part, second_part):
+    dash = 60*'-'
+    for i in range(len(first_part)):
+        print(dash)
+        print("{:^11s} {:<11s}     s'oppose à {:^11s} {:<11s}"
+              .format(first_part[i].name, first_part[i].surname,
+                      second_part[i].name, second_part[i].surname))
+    print(dash)
+    input('Appuyez sur une entrée pour rentrer les résultats...\n')
+
+
+def print_time(startend, time):
+    if startend == 'start':
+        print('Heure de début de ronde : {}'.format(time))
+    else:
+        print('Heure de fin de ronde : {}'.format(time))
+
+
+def raise_exit_error():
+    print("Vous ne pouvez pas sortir d'un tournois non créé")
