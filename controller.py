@@ -3,7 +3,7 @@ import time
 from tinydb import TinyDB, where
 
 from models import Player, Tournament, Match, Round
-from views import (ask_tournament, console_menu,
+from views import (ask_players, ask_tournament, console_menu,
                    ask_selection_resume,
                    ask_console_tournament, display_player_tournament_error,
                    match_array, ask_results, print_time, raise_exit_error,
@@ -294,17 +294,19 @@ def end_tournament(tournament):
 
 def tournaments_informations():
     '''Créer un tournois'''
+    global players
     if len(players) < 8:
         tournament_error_display()
         console_menu(tournaments_informations, add_player,
                      del_player, resume_tournament,
                      show_console_tournaments, players)
-    infos = ask_tournament(players)
+    infos = ask_tournament()
+    player = ask_players(players)
     (date, place, name, cadence, description, nb_round) = infos
     tournois = Tournament(name, place,
                           date, cadence,
                           description, rondes_instances=[],
-                          round=nb_round, players=players,
+                          round=nb_round, players=player,
                           opponents=[])
     start_tournament(tournois)
 

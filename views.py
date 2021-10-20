@@ -4,7 +4,7 @@ from consolemenu.selection_menu import SelectionMenu
 from operator import attrgetter
 
 
-def ask_tournament(players):
+def ask_tournament():
     '''Demande les informations nécessaires pour débuter un tournois'''
     print('Tournois de 4 Rondes')
     print('Vous pouvez quitter à tout moment en tappant exit')
@@ -28,6 +28,37 @@ def ask_tournament(players):
         except ValueError:
             print("Réponse non valide")
     return (date, place, name, cadence, description, 4)
+
+
+def ask_players(players):
+    res = []
+    names = []
+    for player in players:
+        names.append(player.name)
+    names.append('Ok')
+    while 'Ok' in names or len(res) < 8:
+        participants = 'Les participants actuellement sont :'
+        if len(res) == 0:
+            participants += ' Personne '
+        else:
+            i = 0
+            for player in res:
+                i += 1
+                if i % 5 == 0 and i != 0:
+                    participants += '\n'
+                participants += ' {},'.format(player.name)
+        menu = SelectionMenu(names, participants)
+        menu.show(show_exit_option=False)
+        menu.join()
+        selection = menu.selected_option
+        for player in players:
+            if player.name == names[selection]:
+                res.append(player)
+        if names[selection] == 'Ok' and len(res) < 8:
+            continue
+        names.remove(names[selection])
+        menu.exit()
+    return res
 
 
 def console_menu(tournaments_informations, add_player,
