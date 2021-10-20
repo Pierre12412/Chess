@@ -304,13 +304,14 @@ def display_player_tournament_error(tournament):
 def resume_round_display(round):
     dash = 50*'-'
     print('Reprise au round : {}'.format(round.round_name))
+    print('\n')
+    print(dash)
     for match in round.match_list:
-        print(dash)
         print('{:^13}{:^13}{:^13}'.format(
                                         match.player1.name,
                                         "s'oppose à",
                                         match.player2.name))
-        print(dash, '\n')
+        print(dash)
     input('Appuyez sur une entrée pour rentrer les résultats...\n')
 
 

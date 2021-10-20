@@ -267,11 +267,13 @@ def start_tournament(tournament):
 
 def end_round(tournament, round):
     exit_yor = ask_result(round)
-    round.time_end = time.strftime('%H:%M')
-    print_time('end', round.time_end)
-    del_tournament(tournament)
-    tournament.save_tournament(db=TinyDB('db.json'))
-    return exit_yor
+    if exit_yor != 'exit':
+        round.time_end = time.strftime('%H:%M')
+        print_time('end', round.time_end)
+    else:
+        del_tournament(tournament)
+        tournament.save_tournament(db=TinyDB('db.json'))
+        return exit_yor
 
 
 def end_tournament(tournament):

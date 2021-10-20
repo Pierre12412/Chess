@@ -1,4 +1,3 @@
-import time
 from operator import attrgetter
 
 
@@ -46,14 +45,10 @@ class Tournament:
         return not (in_opp or in_opp2)
 
     def start_first_round(self, name, time_start):
-        while True:
-            if name != 'exit':
-                round0 = Round(round_name=name, match_list=[], results=[],
-                               time_start=time_start)
-                break
-            else:
-                print("Vous ne pouvez pas sortir d'un tournois non créé")
-                continue
+        if name != 'exit':
+            round0 = Round(round_name=name, match_list=[], results=[],
+                           time_start=time_start)
+
         self.players = sorted(self.players,
                               key=attrgetter('ranking'),
                               reverse=True)
