@@ -3,9 +3,9 @@ from tinydb import TinyDB, where
 
 from models import Player, Tournament, Match, Round
 from views import (ask_tournament, console_menu, ask_selection_resume,
-                   ask_console_tournament, selection_menu_report,
+                   ask_console_tournament, display_player_tournament_error, resume_round_display, selection_menu_report,
                    delete_player_console, informations_player_console,
-                   delete_tournament_console, rounds_score, tournament_score)
+                   delete_tournament_console, rounds_score, tournament_error_display, tournament_score)
 
 # Ensemble des joueurs (chargés au démarrage)
 players = []
@@ -67,12 +67,7 @@ def del_player():
             for tournament in tournaments:
                 for player in tournament.players:
                     if player.name == players[selection].name:
-                        print('Vous ne pouvez pas supprimer ce joueur, '
-                              'il fait parti du tournois : {}'
-                              .format(tournament.name))
-                        print('Supprimez le tournois dans la base de donnée '
-                              'pour supprimer ce joueur')
-                        input()
+                        display_player_tournament_error(tournament)
                         can_delete = False
             if can_delete:
                 players_table.remove(where('name') == names[selection])
@@ -204,7 +199,6 @@ def resume_tournament():
     selection = ask_selection_resume(names)
 
     try:
-        dash = 50*'-'
         to_continue = selections[selection]
         for round in to_continue.rondes_instances:
             for result in round.results:
@@ -215,14 +209,7 @@ def resume_tournament():
         for round in to_continue.rondes_instances:
             if (len(round.results) != len(to_continue.players)
                or (len(round.results) == 0 and round.round_name is not None)):
-                print('Reprise au round : {}'.format(round.round_name))
-                for match in round.match_list:
-                    print(dash)
-                    print('{:^13}{:^13}{:^13}'.format(
-                                                    match.player1.name,
-                                                    "s'oppose à",
-                                                    match.player2.name))
-                print(dash, '\n')
+                resume_round_display(round)
                 exit_yor = round.end()
                 del_tournament(to_continue)
                 to_continue.save_tournament(db=TinyDB('db.json'))
@@ -277,7 +264,6 @@ def end_tournament(tournament):
     tournament.players = sorted(tournament.players,
                                 key=attrgetter('score', 'ranking'),
                                 reverse=True)
-    print('Fin du tournois, voici le tableau des scores : ')
     rounds_score(tournament)
     tournament_score(tournament)
     del_tournament(tournament)
@@ -292,8 +278,7 @@ def end_tournament(tournament):
 def tournaments_informations():
     '''Créer un tournois'''
     if len(players) < 8:
-        print('Trop peu de gens pour faire un tournois...')
-        input()
+        tournament_error_display()
         console_menu(tournaments_informations, add_player,
                      del_player, resume_tournament,
                      show_console_tournaments, players)

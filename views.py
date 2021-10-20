@@ -268,6 +268,7 @@ def rounds_score(tournament):
 
 
 def tournament_score(tournament):
+    print('Fin du tournois, voici le tableau des scores : ')
     i = 0
     if tournament.players[i].score == tournament.players[i+1].score:
         while (i+1 != len(tournament.players)) and (
@@ -287,4 +288,30 @@ def tournament_score(tournament):
         print('Félicitations au gagnant : {} {}'
               .format(tournament.players[0].name,
                       tournament.players[0].surname))
+    input()
+
+
+def display_player_tournament_error(tournament):
+    print('Vous ne pouvez pas supprimer ce joueur, '
+          'il fait parti du tournois : {}'
+          .format(tournament.name))
+    print('Supprimez le tournois dans la base de donnée '
+          'pour supprimer ce joueur')
+    input()
+
+
+def resume_round_display(round):
+    dash = 50*'-'
+    print('Reprise au round : {}'.format(round.round_name))
+    for match in round.match_list:
+        print(dash)
+        print('{:^13}{:^13}{:^13}'.format(
+                                        match.player1.name,
+                                        "s'oppose à",
+                                        match.player2.name))
+        print(dash, '\n')
+
+
+def tournament_error_display():
+    print('Trop peu de gens pour faire un tournois...')
     input()
